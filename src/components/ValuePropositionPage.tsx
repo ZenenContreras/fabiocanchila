@@ -74,8 +74,8 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     resources: [
       {
         type: 'book',
-        title: 'Libro BVVV',
-        link: '#',
+        title: 'Libro: Buena Vibra para Vivir con Valentía',
+        link: 'zenenc.com/products',
         status: 'available'
       },
       {
@@ -111,13 +111,13 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     resources: [
       {
         type: 'book',
-        title: 'Libro CDEGR',
-        link: '#',
+        title: 'Libro: Consolida y Dirige Equipos que Garanticen Resultados',
+        link: 'zenenc/products',
         status: 'available'
       },
       {
         type: 'course',
-        title: 'Curso CDEGR',
+        title: 'Curso: Consolida y Dirige Equipos que Garanticen Resultados',
         link: '#',
         status: 'available'
       },
