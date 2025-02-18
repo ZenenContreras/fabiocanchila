@@ -74,12 +74,12 @@ export default function Hero() {
     },
     {
       name: "EBA Academy",
-      logo: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80",
+      logo: "/logo-eba.png",
       description: "Formación ejecutiva de alto nivel"
     },
     {
       name: "Metaverso Estatal",
-      logo: "https://images.unsplash.com/photo-1535378917042-10a22c95931a?auto=format&fit=crop&q=80",
+      logo: "/logo-meta.png",
       description: "Innovación en educación virtual"
     }
   ];
