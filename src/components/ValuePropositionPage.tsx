@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Book, Youtube, MessageCircle, Mail, ExternalLink, Calendar, Users } from 'lucide-react';
+import { Book, MessageCircle, Mail, ExternalLink, Calendar, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from './auth/AuthModal';
 

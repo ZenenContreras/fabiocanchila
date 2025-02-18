@@ -113,7 +113,6 @@ export default function BlogList() {
 
       const transformedPosts = data.map(post => ({
         ...post,
-        updated_at: post.created_at,
         categories: post.blog_post_categories
           ?.map(bpc => bpc.category)
           .filter(Boolean) || []
@@ -161,39 +160,36 @@ export default function BlogList() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-24 pb-16">
+    <div className="min-h-screen bg-custom-gray-light pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-            Nuestro Blog
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Blog</h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Descubre las últimas tendencias y consejos sobre estrategia empresarial y desarrollo profesional
           </p>
         </div>
 
-        {/* Categorías con diseño mejorado */}
-        <div className="mb-12 sticky top-20 bg-white/80 backdrop-blur-sm py-4 z-10 border-b border-gray-100">
-          <div className="flex flex-wrap justify-center gap-2">
+        {/* Categorías */}
+        <div className="mb-8">
+          <div className="flex flex-wrap justify-center gap-3">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-6 py-2.5 rounded-lg transition-all duration-300 font-medium ${
+              className={`px-4 py-2 text-sm rounded-full transition-all duration-300 transform hover:scale-105 ${
                 !selectedCategory
-                  ? 'bg-primary text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
-                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  ? 'bg-primary text-white shadow-lg'
+                  : 'bg-white text-gray-600 hover:bg-primary hover:text-white'
               }`}
             >
-              Todas
+              Todas las categorías
             </button>
             {categories.map(category => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-6 py-2.5 rounded-lg transition-all duration-300 font-medium ${
+                className={`px-4 py-2 text-sm rounded-full transition-all duration-300 transform hover:scale-105 ${
                   selectedCategory === category.id
-                    ? 'bg-primary text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
-                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary text-white shadow-lg'
+                    : 'bg-white text-gray-600 hover:bg-primary hover:text-white'
                 }`}
               >
                 {category.name}
@@ -202,64 +198,55 @@ export default function BlogList() {
           </div>
         </div>
 
-        {/* Grid de Posts con Layout Mejorado */}
+        {/* Posts */}
         {posts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {posts.map((post, index) => (
               <motion.article
                 key={post.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-lg shadow-md overflow-hidden transform hover:translate-y-[-4px] transition-all duration-300"
               >
-                <Link to={`/blog/${post.slug}`} className="block h-full">
-                  <div className="relative aspect-[16/9] overflow-hidden rounded-t-xl">
+                <Link to={`/blog/${post.slug}`} className="flex flex-col h-full">
+                  <div className="relative h-48">
                     <img
                       src={post.cover_image}
                       alt={post.title}
-                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover"
                     />
-                    {/* Categorías sobre la imagen */}
-                    <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                  </div>
+                  <div className="p-4 flex flex-col flex-grow">
+                    <div className="flex flex-wrap gap-2 mb-2">
                       {post.categories?.map(category => (
                         <span
                           key={category.id}
-                          className="px-3 py-1 text-xs font-semibold bg-white/90 backdrop-blur-sm text-primary rounded-full shadow-sm"
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
                         >
                           {category.name}
                         </span>
                       ))}
                     </div>
-                  </div>
-                  
-                  <div className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                    <h2 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 hover:text-primary transition-colors">
                       {post.title}
                     </h2>
-                    <p className="text-gray-600 mb-4 line-clamp-2">
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                       {post.excerpt}
                     </p>
-                    
-                    {/* Meta información */}
-                    <div className="flex items-center justify-between text-sm text-gray-500 mt-auto pt-4 border-t border-gray-100">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center">
-                          <Calendar size={16} className="mr-2 text-primary" />
-                          <time dateTime={post.created_at}>
-                            {format(new Date(post.created_at), "d 'de' MMM, yyyy", { locale: es })}
-                          </time>
-                        </div>
-                        {post.reading_time && (
-                          <div className="flex items-center">
-                            <Clock size={16} className="mr-2 text-primary" />
-                            <span>{post.reading_time} min</span>
-                          </div>
-                        )}
+                    <div className="mt-auto flex items-center text-xs text-gray-500 space-x-4">
+                      <div className="flex items-center">
+                        <Calendar size={14} className="mr-1" />
+                        <time dateTime={post.created_at}>
+                          {format(new Date(post.created_at), "d 'de' MMM, yyyy", { locale: es })}
+                        </time>
                       </div>
-                      <span className="text-primary group-hover:translate-x-1 transition-transform duration-200">
-                        Leer más →
-                      </span>
+                      {post.reading_time && (
+                        <div className="flex items-center">
+                          <Clock size={14} className="mr-1" />
+                          <span>{post.reading_time} min</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Link>
@@ -267,17 +254,10 @@ export default function BlogList() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 bg-gray-50 rounded-xl">
-            <div className="max-w-md mx-auto">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No hay artículos disponibles
-              </h3>
-              <p className="text-gray-600">
-                {selectedCategory 
-                  ? 'No hay posts publicados en esta categoría todavía.' 
-                  : 'Pronto publicaremos nuevo contenido.'}
-              </p>
-            </div>
+          <div className="text-center py-16">
+            <p className="text-gray-600 text-lg">
+              No hay posts publicados {selectedCategory ? 'en esta categoría' : 'todavía'}.
+            </p>
           </div>
         )}
       </div>

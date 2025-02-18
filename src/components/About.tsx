@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Youtube, Target, Users, Briefcase, LineChart, Building2, HandshakeIcon, Brain, Rocket, Trophy, Star, Heart } from 'lucide-react';
+import { BookOpen, Youtube, Target, Users, LineChart, Building2, HandshakeIcon, Brain, Rocket, Trophy, Star, Heart } from 'lucide-react';
 
 export default function About() {
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
