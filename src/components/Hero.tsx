@@ -127,18 +127,32 @@ export default function Hero() {
                 Ayudo a personas y organizaciones a alcanzar su máximo potencial a través del "Canvas del Éxito y la Prosperidad".
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleContact('email')}
-                  className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark transition-colors shadow-lg hover:shadow-xl"
-                >
-                  <Mail className="h-5 w-5 mr-2" />
-                  Agenda una consulta
-                  <ArrowRight className="ml-2 -mr-1 h-5 w-5" />
-                </motion.button>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}               
+                transition={{ delay:  0.1 }}  
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start ">
+                
+                  <Link
+                    to={`/value-proposition/transforma-suenos`}
+                    className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-l©g hover:bg-primary-dark transform hover:translate-x-1 "
+                  >
+                    <MousePointerClick className="h-5 w-5 mr-2 group-hover:animate-bounce" />
+                    Ver más
+                  </Link>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleContact('email')}
+                    className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark transition-colors shadow-lg hover:shadow-xl"
+                  >
+                    <Mail className="h-5 w-5 mr-2 " />
+                    Agenda una consulta
+                    <ArrowRight className="ml-2 -mr-1 h-5 w-5" />
+                  </motion.button>
+
+              </motion.div>
             </motion.div>
 
             <motion.div
