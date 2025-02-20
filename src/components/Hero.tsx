@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowRight, Quote, MousePointerClick } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,7 +12,7 @@ export default function Hero() {
 
   const ValueProposition = [
     {
-      id: 'emprendimiento-gestion',
+      id: 'emprendimiento-gestion',     
       title: "Emprendimiento y Gestión para el Desarrollo",
       description: "Asesoro la planificación, ejecución, seguimiento, monitoreo, evaluación y gestión de aprendizajes de actividades para la transformación de realidades territoriales."
     },
