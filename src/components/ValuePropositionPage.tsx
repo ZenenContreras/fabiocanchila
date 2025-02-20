@@ -9,6 +9,7 @@ interface Resource {
   type: 'book' | 'course' | 'program' | 'whatsapp' | 'contact' | 'masterclass';
   title: string;
   link?: string;
+  imgURL?:string;
   status?: 'available' | 'coming-soon' | 'draft';
   description?: string;
 }
@@ -32,7 +33,8 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
         type: 'book',
         title: 'Libro Canvas del Éxito y la Prosperidad',
         link: '#',
-        status: 'available'
+        status: 'available',
+        imgURL: ''
       },
       {
         type: 'course',
