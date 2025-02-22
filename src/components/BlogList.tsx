@@ -119,7 +119,7 @@ export default function BlogList() {
       }));
       
 
-      setPosts(transformedPosts);
+      setPosts(transformedPosts); 
       setError(null);
     } catch (err) {
       console.error('Error fetching posts:', err);
