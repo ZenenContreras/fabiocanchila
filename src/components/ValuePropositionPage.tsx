@@ -38,7 +38,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
       },
       {
         type: 'course',
-        title: 'Curso Transformación Personal',
+        title: 'Curso: Transformación Personal',
         link: '#',
         status: 'available'
       },
@@ -76,13 +76,14 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     resources: [
       {
         type: 'book',
-        title: 'Libro BVVV',
+        title: 'Libro: Buena Vibra Para Vivir Con Valentia',
         link: '#',
-        status: 'available'
+        status: 'available',
+        image: '/buenavibraPortada.png'
       },
       {
         type: 'book',
-        title: 'Libro TIP',
+        title: 'Libro: TIP',
         status: 'draft',
         description: 'En desarrollo'
       },
@@ -113,13 +114,14 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     resources: [
       {
         type: 'book',
-        title: 'Libro CDEGR',
+        title: 'Libro: Consolida y Dirigue Equipos Que Garanticen Resultados',
         link: '#',
-        status: 'available'
+        status: 'available',
+        image: '/consolidaequiposPortada.png'
       },
       {
         type: 'course',
-        title: 'Curso CDEGR',
+        title: 'Curso: Consolida y Dirigue Equipos Que Garanticen Resultados',
         link: '#',
         status: 'available'
       },
@@ -156,15 +158,17 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
       },
       {
         type: 'book',
-        title: 'Libro BVVV',
+        title: 'Libro: Buena Vibra Para Vivir Con Valentia',
         link: '#',
-        status: 'available'
+        status: 'available',
+        image: '/buenavibraPortada.png'
       },
       {
         type: 'book',
-        title: 'Libro CDEGR',
+        title: 'Libro: Consolida y Dirigue Equipos Que Garanticen Resultados',
         link: '#',
-        status: 'available'
+        status: 'available',
+        image: '/consolidaequiposPortada.png'
       },
       {
         type: 'course',
@@ -174,7 +178,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
       },
       {
         type: 'course',
-        title: 'Curso CDEGR',
+        title: 'Curso: Consolida y Dirigue Equipos Que Garanticen Resultados',
         link: '#',
         status: 'available'
       },
