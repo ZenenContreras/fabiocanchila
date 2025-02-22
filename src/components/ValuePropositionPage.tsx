@@ -9,7 +9,7 @@ interface Resource {
   type: 'book' | 'course' | 'program' | 'whatsapp' | 'contact' | 'masterclass';
   title: string;
   link?: string;
-  imgURL?:string;
+  image?:string;
   status?: 'available' | 'coming-soon' | 'draft';
   description?: string;
 }
@@ -34,7 +34,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
         title: 'Libro Canvas del Éxito y la Prosperidad',
         link: '#',
         status: 'available',
-        imgURL: ''
+        image: '/CanvasPortada.jpg'
       },
       {
         type: 'course',
@@ -267,7 +267,7 @@ export default function ValuePropositionPage() {
   const ResourceCard = ({ resource }: { resource: Resource }) => {
     const isComingSoon = resource.status === 'coming-soon';
     const isDraft = resource.status === 'draft';
-
+  
     let Icon;
     switch (resource.type) {
       case 'book':
@@ -285,7 +285,7 @@ export default function ValuePropositionPage() {
       default:
         Icon = ExternalLink;
     }
-
+  
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -293,9 +293,29 @@ export default function ValuePropositionPage() {
         className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300"
       >
         <div className="flex items-start space-x-4">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <Icon className="h-6 w-6 text-primary" />
-          </div>
+          {resource.type === 'book' && resource.image ? (
+            <div className="relative w-16 h-24 mx-auto group perspective">
+              <div className="relative preserve-3d group-hover:rotate-y-6 transition-transform duration-500">
+                <img
+                  src={resource.image}
+                  alt={resource.title}
+                  className="w-full h-full object-cover rounded-lg shadow-xl transform-style-3d backface-hidden"
+                  style={{
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2), 0 2px 3px rgba(0,0,0,0.15)'
+                  }}
+                />
+                {/* Efecto de lomo del libro */}
+                <div 
+                  className="absolute inset-y-0 -left-2 w-2 bg-gray-800 transform-style-3d origin-right skew-y-6"
+                  style={{ transform: 'rotateY(-90deg)' }}
+                ></div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-3 bg-primary/10 rounded-lg">
+              <Icon className="h-6 w-6 text-primary" />
+            </div>
+          )}
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               {resource.title}
@@ -348,6 +368,8 @@ export default function ValuePropositionPage() {
       </motion.div>
     );
   };
+  
+  
 
   return (
     <div className="min-h-screen pt-24 pb-16">
