@@ -43,10 +43,10 @@ export default function BlogPost() {
 
       const transformedPost = {
         ...data,
-        categories: data.categories?.map(c => c.category) || [],
-        tags: data.tags?.map(t => t.tag) || []
+        categories: data.categories?.map((c: { category: any }) => c.category) || [],
+        tags: data.tags?.map((t: { tag: any }) => t.tag) || [],
       };
-
+      
       setPost(transformedPost);
     } catch (err) {
       console.error('Error fetching post:', err);

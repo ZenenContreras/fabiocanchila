@@ -114,9 +114,10 @@ export default function BlogList() {
       const transformedPosts = data.map(post => ({
         ...post,
         categories: post.blog_post_categories
-          ?.map(bpc => bpc.category)
+          ?.flatMap(bpc => bpc.category) // Usa flatMap en lugar de map
           .filter(Boolean) || []
       }));
+      
 
       setPosts(transformedPosts);
       setError(null);
