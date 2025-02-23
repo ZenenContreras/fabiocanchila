@@ -32,7 +32,7 @@ export default defineConfig({
           'utils': ['date-fns'],
           'supabase': ['@supabase/supabase-js']
         },
-      }
+      } 
     },
     reportCompressedSize: true,
     chunkSizeWarningLimit: 1000,
