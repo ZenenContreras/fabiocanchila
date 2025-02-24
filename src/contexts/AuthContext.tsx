@@ -52,12 +52,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await withRetry<{
         data: { admin_email: string }[] | null;
         error: any;
-      }>(async () =>
+      }>(() =>
         supabase
           .from('admin_config')
           .select('admin_email')
           .eq('admin_email', email)
-          .then(result => result)
       );
 
       if (error) {
@@ -66,7 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setIsAdmin(Boolean(data?.length));
+      // Check if any rows were returned
+      setIsAdmin(data && data.length > 0);
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);

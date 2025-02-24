@@ -1,43 +1,54 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { splitVendorChunkPlugin } from 'vite'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      babel: {
+        plugins: [
+          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
+        ]
+      }
+    }),
+    splitVendorChunkPlugin()
+  ],
   build: {
-    target: 'es2015',
+    target: 'esnext',
     minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: true,
-        drop_debugger: true
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.trace']
       }
     },
     cssMinify: true,
-    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        format: 'es',
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'supabase': ['@supabase/supabase-js'],
-          'ui': ['framer-motion', 'lucide-react']
+          'ui-vendor': ['framer-motion', 'lucide-react'],
+          'utils': ['date-fns'],
+          'supabase': ['@supabase/supabase-js']
         }
       }
     },
-    sourcemap: true
-  },
-  resolve: {
-    dedupe: ['react', 'react-dom']
+    reportCompressedSize: true,
+    chunkSizeWarningLimit: 1000,
+    sourcemap: false
   },
   optimizeDeps: {
     include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      '@supabase/supabase-js',
-      'framer-motion'
+      'react', 
+      'react-dom', 
+      'react-router-dom', 
+      'framer-motion',
+      '@supabase/supabase-js'
     ],
-    force: true
+    esbuildOptions: {
+      target: 'esnext'
+    }
   },
   server: {
     headers: {
