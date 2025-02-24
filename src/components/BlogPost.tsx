@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -7,47 +7,43 @@ import { Clock, Calendar, Tag, Folder, Youtube } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { BlogPost as BlogPostType } from '../types';
 
-export default function BlogPost() {
-  const { slug } = useParams();
+const BlogPost: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [post, setPost] = useState<BlogPostType | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [post, setPost] = React.useState<BlogPostType | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
+    if (!slug) {
+      navigate('/blog');
+      return;
+    }
     fetchPost();
-  }, [slug]);
+  }, [slug, navigate]);
 
   const fetchPost = async () => {
+    if (!slug) return;
+    
     try {
       const { data, error } = await supabase
         .from('posts')
         .select(`
           *,
-          categories:post_categories(
-            category:categories(*)
-          ),
-          tags:post_tags(
-            tag:tags(*)
+          blog_post_categories (
+            category:blog_categories (*)
           )
         `)
         .eq('slug', slug)
         .eq('published', true)
         .single();
 
-      if (error) throw error;
-
-      if (!data) {
+      if (error || !data) {
+        console.error('Error fetching post:', error);
         navigate('/blog');
         return;
       }
 
-      const transformedPost = {
-        ...data,
-        categories: data.categories?.map((c: { category: any }) => c.category) || [],
-        tags: data.tags?.map((t: { tag: any }) => t.tag) || [],
-      };
-      
-      setPost(transformedPost);
+      setPost(data);
     } catch (err) {
       console.error('Error fetching post:', err);
       navigate('/blog');
@@ -59,7 +55,7 @@ export default function BlogPost() {
   if (loading) {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -144,4 +140,6 @@ export default function BlogPost() {
       </article>
     </div>
   );
-}
+};
+
+export default BlogPost;

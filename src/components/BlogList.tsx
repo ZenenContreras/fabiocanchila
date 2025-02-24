@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -13,6 +13,7 @@ export default function BlogList() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCategories();
@@ -104,8 +105,8 @@ export default function BlogList() {
         updated_at: post.created_at,
         categories: post.blog_post_categories
           ?.map(bpc => bpc.category)
-          .filter(Boolean) || []
-      }));
+          .filter((cat): cat is BlogCategory => Boolean(cat)) || []
+      })) as BlogPost[];
 
       // Filter posts to ensure only those with the selected category are shown
       const filteredPosts = selectedCategory
@@ -127,6 +128,12 @@ export default function BlogList() {
   useEffect(() => {
     fetchPosts();
   }, [selectedCategory]);
+
+  const handleBlogClick = (slug: string) => {
+    if (slug) {
+      navigate(`/blog/${slug}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -208,9 +215,10 @@ export default function BlogList() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-2xl shadow-xl overflow-hidden transform hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                onClick={() => handleBlogClick(post.slug)}
+                className="bg-white rounded-2xl shadow-xl overflow-hidden transform hover:shadow-2xl transition-all duration-300 border border-gray-100 cursor-pointer"
               >
-                <Link to={`/blog/${post.slug}`} className="flex flex-col h-full">
+                <div className="flex flex-col h-full">
                   <div className="relative h-56">
                     <img
                       src={post.cover_image}
@@ -243,7 +251,7 @@ export default function BlogList() {
                       )}
                     </div>
                   </div>
-                </Link>
+                </div>
               </motion.article>
             ))}
           </div>
