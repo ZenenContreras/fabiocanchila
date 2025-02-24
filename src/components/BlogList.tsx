@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -7,7 +8,13 @@ import { supabase } from '../lib/supabase';
 import type { BlogPost, BlogCategory } from '../types';
 import { Clock, Calendar } from 'lucide-react';
 
-export default function BlogList() {
+interface BlogPostWithCategories extends Omit<BlogPost, 'categories'> {
+  blog_post_categories: {
+    category: BlogCategory;
+  }[];
+}
+
+const BlogList: React.FC = () => {
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -68,50 +75,33 @@ export default function BlogList() {
       let query = supabase
         .from('posts')
         .select(`
-          id,
-          title,
-          slug,
-          excerpt,
-          content,
-          cover_image,
-          published,
-          created_at,
-          reading_time,
+          *,
           blog_post_categories (
-            post_id,
-            category_id,
-            category:blog_categories (
-              id,
-              name,
-              slug,
-              description
-            )
+            category:blog_categories (*)
           )
         `)
         .eq('published', true)
         .order('created_at', { ascending: false });
 
       if (selectedCategory) {
-        query = query
-          .eq('blog_post_categories.category_id', selectedCategory);
+        query = query.eq('blog_post_categories.category_id', selectedCategory);
       }
 
       const { data, error } = await query;
 
       if (error) throw error;
 
-      const transformedPosts = data.map(post => ({
+      const transformedPosts: BlogPost[] = data.map((post: BlogPostWithCategories) => ({
         ...post,
         updated_at: post.created_at,
         categories: post.blog_post_categories
           ?.map(bpc => bpc.category)
           .filter((cat): cat is BlogCategory => Boolean(cat)) || []
-      })) as BlogPost[];
+      }));
 
-      // Filter posts to ensure only those with the selected category are shown
       const filteredPosts = selectedCategory
-        ? transformedPosts.filter(post =>
-            post.blog_post_categories.some(bpc => bpc.category_id === selectedCategory)
+        ? transformedPosts.filter(post => 
+            post.categories.some(cat => cat.id === selectedCategory)
           )
         : transformedPosts;
 
@@ -274,4 +264,6 @@ export default function BlogList() {
       </div>
     </div>
   );
-}
+};
+
+export default BlogList;

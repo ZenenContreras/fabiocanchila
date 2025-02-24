@@ -11,7 +11,9 @@ import AuthModal from './components/auth/AuthModal';
 
 // Lazy load components
 const ServiceDetail = lazy(() => import('./components/ServiceDetail'));
-const BlogList = lazy(() => import('./components/BlogList'));
+const BlogList = lazy(() => import('./components/BlogList').then(module => ({
+  default: module.default
+})));
 const BlogPost = lazy(() => import('./components/BlogPost'));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 const Products = lazy(() => import('./components/Products'));
