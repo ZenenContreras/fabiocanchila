@@ -14,7 +14,7 @@ export default defineConfig({
     splitVendorChunkPlugin()
   ],
   build: {
-    target: 'esnext', // Mantén esnext, pero prueba con 'es2015' si hay problemas
+    target: 'es2015', // Mantén esnext, pero prueba con 'es2015' si hay problemas
     minify: 'terser',
     terserOptions: {
       compress: {
