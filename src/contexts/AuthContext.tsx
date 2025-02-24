@@ -49,12 +49,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const { data, error } = await withRetry(() =>
+      const { data, error } = await withRetry(async () =>
         supabase
           .from('admin_config')
           .select('admin_email')
           .eq('admin_email', email)
-          .then(result => result)
+          .single()
       );
 
       if (error) {
@@ -71,7 +71,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signOut = () => supabase.auth.signOut();
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <AuthContext.Provider value={{ session, user, isAdmin, signOut }}>

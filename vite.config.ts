@@ -1,9 +1,8 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { splitVendorChunkPlugin } from 'vite';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { splitVendorChunkPlugin } from 'vite'
 
 export default defineConfig({
-  base: '/', // o el path base de tu aplicación
   plugins: [
     react({
       babel: {
@@ -15,7 +14,7 @@ export default defineConfig({
     splitVendorChunkPlugin()
   ],
   build: {
-    target: 'es2015', // Usamos es2015 para mayor compatibilidad en producción
+    target: 'esnext',
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -27,31 +26,33 @@ export default defineConfig({
     cssMinify: true,
     rollupOptions: {
       output: {
-        manualChunks: undefined
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['framer-motion', 'lucide-react'],
+          'utils': ['date-fns'],
+          'supabase': ['@supabase/supabase-js']
+        }
       }
     },
     reportCompressedSize: true,
     chunkSizeWarningLimit: 1000,
-    sourcemap: true, // para mejor debugging en producción
+    sourcemap: false
   },
   optimizeDeps: {
     include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
+      'react', 
+      'react-dom', 
+      'react-router-dom', 
       'framer-motion',
       '@supabase/supabase-js'
     ],
     esbuildOptions: {
-      target: 'esnext' // Prueba con 'es2015' si es necesario
+      target: 'esnext'
     }
   },
   server: {
     headers: {
       'Cache-Control': 'public, max-age=31536000'
     }
-  },
-  resolve: {
-    preserveSymlinks: true // Ayuda con cargas dinámicas en producción
   }
-});
+})

@@ -101,6 +101,7 @@ export default function BlogList() {
 
       const transformedPosts = data.map(post => ({
         ...post,
+        updated_at: post.created_at,
         categories: post.blog_post_categories
           ?.map(bpc => bpc.category)
           .filter(Boolean) || []
@@ -217,7 +218,7 @@ export default function BlogList() {
                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                     />
                     <div className="absolute top-4 left-4 bg-white/90 px-3 py-1 rounded-full text-sm font-medium text-gray-800 shadow-md">
-                      {post.categories[0]?.name || 'General'}
+                      {post.categories?.[0]?.name || 'General'}
                     </div>
                   </div>
                   <div className="p-6 flex flex-col flex-grow">
