@@ -7,7 +7,7 @@ import Footer from './components/Footer';
 import Hero from './components/Hero';
 import ServicesPage from './components/ServicesPage';
 import Loading from './components/Loading';
-import AuthModal from './components/shared/AuthModal';
+import AuthModal from './components/auth/AuthModal';
 
 // Lazy load components
 const ServiceDetail = lazy(() => import('./components/ServiceDetail'));

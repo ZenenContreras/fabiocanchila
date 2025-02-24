@@ -20,7 +20,6 @@ export default defineConfig({
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'supabase': ['@supabase/supabase-js'],
           'ui': ['framer-motion', 'lucide-react'],
-          'auth': ['./src/components/auth/AuthModal.tsx'],
           'blog': [
             './src/components/BlogList.tsx',
             './src/components/BlogPost.tsx'

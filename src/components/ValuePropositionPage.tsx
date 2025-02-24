@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Book, MessageCircle, Mail, ExternalLink, Calendar, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import AuthModal from '../shared/AuthModal';
+import AuthModal from '../components/auth/AuthModal';
 
 interface Resource {
   type: 'book' | 'course' | 'program' | 'whatsapp' | 'contact' | 'masterclass';
