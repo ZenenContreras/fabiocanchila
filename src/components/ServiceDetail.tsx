@@ -8,37 +8,41 @@ import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/auth/AuthModal';
 
 export default function ServiceDetail() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
-    fetchService();
-  }, [id]);
+    if (!id) return;
+    
+    const fetchService = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-  const fetchService = async () => {
-    try {
-      const { data, error } = await withRetry(() =>
-        supabase.from('services').select('*').eq('id', id).single()
-      );
-
-      if (error) throw error;
-      if (!data) {
-        navigate('/services');
-        return;
+        if (error) throw error;
+        if (!data) throw new Error('Servicio no encontrado');
+        
+        setService(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching service:', err);
+        setError('No se pudo cargar el servicio');
+        navigate('/services', { replace: true });
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setService(data);
-    } catch (err) {
-      console.error('Error fetching service:', err);
-      navigate('/services');
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchService();
+  }, [id, navigate]);
 
   const handleContact = (type: 'email' | 'whatsapp') => {
     if (!user) {
@@ -60,13 +64,15 @@ export default function ServiceDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-24 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  if (!service) return null;
+  if (error || !service) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-16">

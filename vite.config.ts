@@ -26,11 +26,17 @@ export default defineConfig({
     cssMinify: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['framer-motion', 'lucide-react'],
-          'utils': ['date-fns'],
-          'supabase': ['@supabase/supabase-js']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'react-vendor';
+            if (id.includes('framer-motion')) return 'ui-vendor';
+            if (id.includes('@supabase')) return 'supabase-vendor';
+            return 'vendor';
+          }
+          // Agrupa los componentes de página en su propio chunk
+          if (id.includes('/components/')) {
+            return 'components';
+          }
         }
       }
     },
@@ -40,11 +46,11 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      'react', 
-      'react-dom', 
-      'react-router-dom', 
-      'framer-motion',
-      '@supabase/supabase-js'
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@supabase/supabase-js',
+      'framer-motion'
     ],
     esbuildOptions: {
       target: 'esnext'

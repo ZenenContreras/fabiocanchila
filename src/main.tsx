@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Suspense, lazy } from 'react'
 import { BrowserRouter } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
 import './index.css'
 
 // Lazy load the main App component
