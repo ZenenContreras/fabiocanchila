@@ -125,7 +125,8 @@ export default function About() {
               <img
                 src="https://media.licdn.com/dms/image/v2/D4E03AQHa3yNiph2JhA/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1720208228895?e=1743033600&v=beta&t=ha5UMLDIvjEPSaxokcXCy4KdTh38yxy9BWSWWJzndNk"
                 alt="Fabio Canchila"
-                className="w-full max-w-md mx-auto mix-blend-multiply object-cover"
+                className="w-full max-w-md mx-auto object-cover"
+                style={{ mixBlendMode: 'multiply' }}
               />
             </motion.div>
           </div>
