@@ -14,7 +14,7 @@ export default defineConfig({
     splitVendorChunkPlugin()
   ],
   build: {
-    target: 'es2015', // Usa es2015 para mayor compatibilidad en producción
+    target: 'es2015', // Usamos es2015 para mayor compatibilidad en producción
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -29,9 +29,9 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'ui-vendor': ['framer-motion', 'lucide-react'],
-          'utils': ['date-fns'],
-          'supabase-vendor': ['@supabase/supabase-js'] // Cambio realizado aquí
-        },
+          'utils': ['date-fns']
+          // Se ha eliminado la división manual para '@supabase/supabase-js'
+        }
       } 
     },
     reportCompressedSize: true,
@@ -47,7 +47,7 @@ export default defineConfig({
       '@supabase/supabase-js'
     ],
     esbuildOptions: {
-      target: 'esnext' // Puedes probar con 'es2015' si esnext causa problemas
+      target: 'esnext' // Prueba con 'es2015' si es necesario
     }
   },
   server: {
@@ -56,6 +56,6 @@ export default defineConfig({
     }
   },
   resolve: {
-    preserveSymlinks: true // Manejo de cargas dinámicas en producción
+    preserveSymlinks: true // Ayuda con cargas dinámicas en producción
   }
 });
