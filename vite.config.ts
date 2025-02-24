@@ -16,17 +16,18 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'react-vendor';
-            if (id.includes('@supabase')) return 'supabase-vendor';
-            if (id.includes('framer-motion')) return 'ui-vendor';
-            return 'vendor';
-          }
+        format: 'es',
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'supabase': ['@supabase/supabase-js'],
+          'ui': ['framer-motion', 'lucide-react']
         }
       }
     },
     sourcemap: true
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom']
   },
   optimizeDeps: {
     include: [
@@ -35,7 +36,8 @@ export default defineConfig({
       'react-router-dom',
       '@supabase/supabase-js',
       'framer-motion'
-    ]
+    ],
+    force: true
   },
   server: {
     headers: {
