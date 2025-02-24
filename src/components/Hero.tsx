@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, ArrowRight, Quote, MousePointerClick } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import AuthModal from '../components/auth/AuthModal';
+import AuthModal from '../shared/AuthModal';
 import { Link } from 'react-router-dom';
 
 export default function Hero() {

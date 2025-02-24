@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 import Hero from './components/Hero';
 import ServicesPage from './components/ServicesPage';
 import Loading from './components/Loading';
+import AuthModal from './components/shared/AuthModal';
 
 // Lazy load components
 const ServiceDetail = lazy(() => import('./components/ServiceDetail'));
@@ -16,9 +17,6 @@ const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 const Products = lazy(() => import('./components/Products'));
 const About = lazy(() => import('./components/About'));
 const ValuePropositionPage = lazy(() => import('./components/ValuePropositionPage'));
-const AuthModal = lazy(() => import('./components/auth/AuthModal').then(module => ({ 
-  default: module.default 
-})));
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { session, isAdmin } = useAuth();

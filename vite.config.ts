@@ -2,15 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  plugins: [
-    react({
-      babel: {
-        plugins: [
-          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
-        ]
-      }
-    })
-  ],
+  plugins: [react()],
   build: {
     target: 'es2015',
     minify: 'terser',
@@ -21,21 +13,22 @@ export default defineConfig({
       }
     },
     cssMinify: true,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            if (id.includes('@supabase')) {
-              return 'supabase-vendor';
-            }
-            if (id.includes('framer-motion') || id.includes('lucide-react')) {
-              return 'ui-vendor';
-            }
-            return 'vendor';
-          }
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'supabase': ['@supabase/supabase-js'],
+          'ui': ['framer-motion', 'lucide-react'],
+          'auth': ['./src/components/auth/AuthModal.tsx'],
+          'blog': [
+            './src/components/BlogList.tsx',
+            './src/components/BlogPost.tsx'
+          ],
+          'services': [
+            './src/components/ServiceDetail.tsx',
+            './src/components/ServicesPage.tsx'
+          ]
         }
       }
     },
@@ -46,8 +39,8 @@ export default defineConfig({
       'react',
       'react-dom',
       'react-router-dom',
-      'framer-motion',
-      '@supabase/supabase-js'
+      '@supabase/supabase-js',
+      'framer-motion'
     ]
   },
   server: {

@@ -5,7 +5,7 @@ import { Mail, MessageCircle  } from 'lucide-react';
 import { supabase, withRetry } from '../lib/supabase';
 import type { Service } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import AuthModal from '../components/auth/AuthModal';
+import AuthModal from '../shared/AuthModal';
 
 export default function ServiceDetail() {
   const { id } = useParams();
