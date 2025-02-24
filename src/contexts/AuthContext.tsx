@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from('admin_config')
           .select('admin_email')
           .eq('admin_email', email)
+          .then(result => result)
       );
 
       if (error) {
