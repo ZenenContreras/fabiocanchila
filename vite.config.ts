@@ -14,7 +14,7 @@ export default defineConfig({
     splitVendorChunkPlugin()
   ],
   build: {
-    target: 'es2015', // Mantén esnext, pero prueba con 'es2015' si hay problemas
+    target: 'es2015', // Usa es2015 para mayor compatibilidad en producción
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -30,13 +30,13 @@ export default defineConfig({
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'ui-vendor': ['framer-motion', 'lucide-react'],
           'utils': ['date-fns'],
-          'supabase': ['@supabase/supabase-js']
+          'supabase-vendor': ['@supabase/supabase-js'] // Cambio realizado aquí
         },
       } 
     },
     reportCompressedSize: true,
     chunkSizeWarningLimit: 1000,
-    sourcemap: false // Usa sourcemaps en desarrollo para depuración, pero quítalos en producción para performances
+    sourcemap: false // Desactiva sourcemaps en producción para mejorar el rendimiento
   },
   optimizeDeps: {
     include: [
@@ -47,7 +47,7 @@ export default defineConfig({
       '@supabase/supabase-js'
     ],
     esbuildOptions: {
-      target: 'esnext' // Prueba con 'es2015' si esnext causa problemas
+      target: 'esnext' // Puedes probar con 'es2015' si esnext causa problemas
     }
   },
   server: {
@@ -55,8 +55,7 @@ export default defineConfig({
       'Cache-Control': 'public, max-age=31536000'
     }
   },
-  // Añade esta opción para manejar mejor las cargas dinámicas en producción
   resolve: {
-    preserveSymlinks: true
+    preserveSymlinks: true // Manejo de cargas dinámicas en producción
   }
 });
