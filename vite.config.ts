@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { splitVendorChunkPlugin } from 'vite';
 
 export default defineConfig({
+  base: '/', // o el path base de tu aplicación
   plugins: [
     react({
       babel: {
@@ -26,17 +27,12 @@ export default defineConfig({
     cssMinify: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['framer-motion', 'lucide-react'],
-          'utils': ['date-fns']
-          // Se ha eliminado la división manual para '@supabase/supabase-js'
-        }
-      } 
+        manualChunks: undefined
+      }
     },
     reportCompressedSize: true,
     chunkSizeWarningLimit: 1000,
-    sourcemap: false // Desactiva sourcemaps en producción para mejorar el rendimiento
+    sourcemap: true, // para mejor debugging en producción
   },
   optimizeDeps: {
     include: [
