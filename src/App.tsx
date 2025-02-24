@@ -6,23 +6,19 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Hero from './components/Hero';
 import ServicesPage from './components/ServicesPage';
+import Loading from './components/Loading';
 
 // Lazy load components
 const ServiceDetail = lazy(() => import('./components/ServiceDetail'));
 const BlogList = lazy(() => import('./components/BlogList'));
 const BlogPost = lazy(() => import('./components/BlogPost'));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
-const AuthModal = lazy(() => import('./components/auth/AuthModal'));
 const Products = lazy(() => import('./components/Products'));
 const About = lazy(() => import('./components/About'));
 const ValuePropositionPage = lazy(() => import('./components/ValuePropositionPage'));
-
-// Loading component
-const Loading = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-  </div>
-);
+const AuthModal = lazy(() => import('./components/auth/AuthModal').then(module => ({ 
+  default: module.default 
+})));
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { session, isAdmin } = useAuth();
@@ -32,7 +28,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const [isAuthModalOpen, setIsAuthModalOpen] = React.useState(false);
   const { user, signOut } = useAuth();
-  useScrollToTop(); // Add the hook here
+  useScrollToTop();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -64,14 +60,14 @@ function AppContent() {
         </Suspense>
       </main>
       <Footer />
-      <Suspense fallback={null}>
-        {isAuthModalOpen && (
+      {isAuthModalOpen && (
+        <Suspense fallback={null}>
           <AuthModal 
             isOpen={isAuthModalOpen} 
             onClose={() => setIsAuthModalOpen(false)} 
           />
-        )}
-      </Suspense>
+        </Suspense>
+      )}
     </div>
   );
 }
