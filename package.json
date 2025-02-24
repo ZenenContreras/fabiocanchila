@@ -11,7 +11,7 @@
     "analyze": "vite build --mode analyze"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.7",
+    "@supabase/supabase-js": "^2.49.1",
     "@tailwindcss/typography": "^0.5.10",
     "date-fns": "^3.3.1",
     "framer-motion": "^11.0.8",
