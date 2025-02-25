@@ -6,6 +6,8 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Hero from './components/Hero';
 import ServicesPage from './components/ServicesPage';
+import AccessManager from './components/admin/AccessManager';
+import SecureBookViewer from './components/SecureBookViewer';
 
 // Lazy load components
 const ServiceDetail = lazy(() => import('./components/ServiceDetail'));
@@ -32,7 +34,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const [isAuthModalOpen, setIsAuthModalOpen] = React.useState(false);
   const { user, signOut } = useAuth();
-  useScrollToTop(); // Add the hook here
+  useScrollToTop();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -52,6 +54,8 @@ function AppContent() {
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/products" element={<Products />} />
             <Route path="/value-proposition/:id" element={<ValuePropositionPage />} />
+            
+            {/* Rutas de administración */}
             <Route 
               path="/admin" 
               element={
@@ -59,6 +63,20 @@ function AppContent() {
                   <AdminDashboard />
                 </PrivateRoute>
               } 
+            />
+            <Route 
+              path="/admin/accesos" 
+              element={
+                <PrivateRoute>
+                  <AccessManager />
+                </PrivateRoute>
+              } 
+            />
+
+            {/* Ruta para visualizar libros de forma segura */}
+            <Route 
+              path="/libro-seguro/:token" 
+              element={<SecureBookViewer />} 
             />
           </Routes>
         </Suspense>

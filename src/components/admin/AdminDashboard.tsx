@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import BlogManager from './BlogManager';
 import ProductManager from './ProductManager';
 import ServiceManager from './ServiceManager';
+import AccessManager from './AccessManager';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('services');
@@ -17,6 +18,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="services">Servicios</TabsTrigger>
             <TabsTrigger value="products">Publicaciones</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
+            <TabsTrigger value="access">Gestión de Accesos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="blog" className="bg-white rounded-lg shadow-lg p-6">
@@ -29,6 +31,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="services" className="bg-white rounded-lg shadow-lg p-6">
             <ServiceManager />
+          </TabsContent>
+
+          <TabsContent value="access" className="bg-white rounded-lg shadow-lg p-6">
+            <AccessManager />
           </TabsContent>
         </Tabs>
       </div>
