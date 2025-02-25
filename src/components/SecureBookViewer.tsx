@@ -56,8 +56,8 @@ export default function SecureBookViewer() {
       }
 
       setLibroData({
-        titulo: accessData.libro.titulo,
-        archivo_url: accessData.libro.archivo_url,
+        titulo: accessData.libro?.titulo || '',
+        archivo_url: accessData.libro?.archivo_url || '',
         email: accessData.email
       });
 
@@ -174,21 +174,6 @@ export default function SecureBookViewer() {
     );
   }
 
-  // Obtener la URL firmada para el archivo PDF
-  const getSignedUrl = async () => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('secure-books')
-        .createSignedUrl(libroData.archivo_url, 3600); // URL válida por 1 hora
-
-      if (error) throw error;
-      return data.signedUrl;
-    } catch (error) {
-      console.error('Error obteniendo URL firmada:', error);
-      return null;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 pt-20 pb-16">
       <div className="bg-white shadow">
@@ -215,31 +200,52 @@ export default function SecureBookViewer() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="relative" style={{ height: 'calc(100vh - 200px)' }}>
-            {/* Usamos un iframe con la URL firmada */}
+          <div 
+            className="relative" 
+            style={{ height: 'calc(100vh - 200px)' }}
+            onContextMenu={(e) => e.preventDefault()}
+          >
             <iframe
-              src={`https://docs.google.com/viewer?url=${encodeURIComponent(libroData.archivo_url)}&embedded=true`}
+              src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0&view=FitH`}
               className="w-full h-full"
-              style={{
-                pointerEvents: 'none',
+              style={{ 
+                border: 'none',
                 userSelect: 'none',
-                WebkitUserSelect: 'none'
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
               }}
+              onContextMenu={(e) => e.preventDefault()}
             />
             <div 
               className="absolute inset-0" 
               style={{ 
                 background: 'transparent',
-                pointerEvents: 'none'
+                pointerEvents: 'none',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
               }}
               onContextMenu={(e) => e.preventDefault()}
-            />
+            >
+              <div 
+                className="absolute inset-0 select-none"
+                style={{
+                  background: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill-opacity="0.05"><text x="50%" y="50%" font-size="12" fill="%23000" text-anchor="middle" alignment-baseline="middle">${libroData.email}</text></svg>')`,
+                  pointerEvents: 'none',
+                  mixBlendMode: 'multiply',
+                  opacity: 0.5
+                }}
+              />
+            </div>
           </div>
         </div>
 
         <div className="mt-4 text-center text-sm text-gray-500">
           <p>Este contenido está protegido y es solo para visualización.</p>
           <p>No se permite la descarga o copia del material.</p>
+          <p className="text-xs mt-1">Acceso exclusivo para: {libroData.email}</p>
         </div>
       </div>
     </div>

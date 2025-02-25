@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Plus, Trash2, ExternalLink, Search, Upload, AlertCircle, Book, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, ExternalLink, Search, Upload, AlertCircle, Book, Eye, EyeOff, Edit2, Clock, Mail, Check, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface LibroPdf {
   id: string;
@@ -11,20 +13,23 @@ interface LibroPdf {
   created_at: string;
 }
 
-interface AccesoPdf {
+interface Access {
   id: string;
   email: string;
-  libro: LibroPdf;
+  token: string;
   created_at: string;
   expires_at: string;
   is_active: boolean;
-  token: string;
+  libro: {
+    titulo: string;
+    id: string;
+  };
 }
 
 export default function AccessManager() {
   const { session, user } = useAuth();
   const [libros, setLibros] = useState<LibroPdf[]>([]);
-  const [accesos, setAccesos] = useState<AccesoPdf[]>([]);
+  const [accesses, setAccesses] = useState<Access[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -47,10 +52,19 @@ export default function AccessManager() {
   // Estado para filtros
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Estado para editar acceso
+  const [editingAccess, setEditingAccess] = useState<Access | null>(null);
+  const [email, setEmail] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
+
+  // Estado para editar libro
+  const [editingBook, setEditingBook] = useState<LibroPdf | null>(null);
+  const [editingBookTitle, setEditingBookTitle] = useState('');
+
   useEffect(() => {
     if (session?.user.email === 'zenen1@gmail.com') {
       fetchLibros();
-      fetchAccesos();
+      loadAccesses();
     }
   }, [session]);
 
@@ -137,40 +151,24 @@ export default function AccessManager() {
     }
   };
 
-  const fetchAccesos = async () => {
+  const loadAccesses = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('acceso_pdf')
         .select(`
-          id,
-          email,
-          token,
-          created_at,
-          expires_at,
-          is_active,
+          *,
           libro:libro_id (
-            id,
             titulo,
-            archivo_url
+            id
           )
         `)
-        .returns<{
-          id: string;
-          email: string;
-          token: string;
-          created_at: string;
-          expires_at: string;
-          is_active: boolean;
-          libro: LibroPdf;
-        }[]>()
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAccesos(data || []);
-    } catch (err: any) {
-      console.error('Error al cargar accesos:', err);
-      setError(err.message);
+      setAccesses(data || []);
+    } catch (error) {
+      console.error('Error cargando accesos:', error);
     } finally {
       setLoading(false);
     }
@@ -196,7 +194,7 @@ export default function AccessManager() {
 
       if (error) throw error;
 
-      await fetchAccesos();
+      await loadAccesses();
       setNewAccess({ email: '', libroId: '', expiresAt: '' });
       setShowAccessForm(false);
 
@@ -205,23 +203,89 @@ export default function AccessManager() {
     }
   };
 
-  const handleRevokeAccess = async (id: string) => {
-    if (!window.confirm('¿Estás seguro de que quieres revocar este acceso?')) return;
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este acceso?')) return;
 
     try {
       const { error } = await supabase
         .from('acceso_pdf')
-        .update({ is_active: false })
+        .delete()
         .eq('id', id);
 
       if (error) throw error;
-      await fetchAccesos();
+      await loadAccesses();
+    } catch (error) {
+      console.error('Error eliminando acceso:', error);
+    }
+  };
+
+  const handleEdit = async (access: Access) => {
+    setEditingAccess(access);
+    setEmail(access.email);
+    setExpiresAt(access.expires_at.split('T')[0]);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingAccess) return;
+
+    try {
+      const { error } = await supabase
+        .from('acceso_pdf')
+        .update({
+          email,
+          expires_at: new Date(expiresAt).toISOString(),
+        })
+        .eq('id', editingAccess.id);
+
+      if (error) throw error;
+      setEditingAccess(null);
+      await loadAccesses();
+    } catch (error) {
+      console.error('Error actualizando acceso:', error);
+    }
+  };
+
+  const toggleActive = async (id: string, currentState: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('acceso_pdf')
+        .update({ is_active: !currentState })
+        .eq('id', id);
+
+      if (error) throw error;
+      await loadAccesses();
+    } catch (error) {
+      console.error('Error actualizando estado:', error);
+    }
+  };
+
+  const handleEditBook = (libro: LibroPdf) => {
+    setEditingBook(libro);
+    setEditingBookTitle(libro.titulo);
+  };
+
+  const handleUpdateBook = async () => {
+    if (!editingBook) return;
+
+    try {
+      setError(null);
+      const { error } = await supabase
+        .from('libro_pdf')
+        .update({ titulo: editingBookTitle })
+        .eq('id', editingBook.id);
+
+      if (error) throw error;
+      
+      await fetchLibros();
+      setEditingBook(null);
+      setEditingBookTitle('');
     } catch (err: any) {
+      console.error('Error actualizando libro:', err);
       setError(err.message);
     }
   };
 
-  const filteredAccesses = accesos.filter(access => 
+  const filteredAccesses = accesses.filter(access => 
     access.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     access.libro.titulo.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -241,7 +305,7 @@ export default function AccessManager() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <RefreshCw className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -413,21 +477,62 @@ export default function AccessManager() {
               <div className="flex items-center justify-center w-16 h-16 bg-primary-light rounded-lg mb-4 mx-auto">
                 <Book className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
-                {libro.titulo}
-              </h3>
-              <p className="text-sm text-gray-500 text-center mb-4">
-                Subido el {new Date(libro.created_at).toLocaleDateString()}
-              </p>
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setShowAccessForm(true)}
-                  className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Dar Acceso
-                </button>
-              </div>
+              
+              {editingBook?.id === libro.id ? (
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    value={editingBookTitle}
+                    onChange={(e) => setEditingBookTitle(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Título del libro"
+                  />
+                  <div className="flex justify-center space-x-2">
+                    <button
+                      onClick={handleUpdateBook}
+                      className="inline-flex items-center px-3 py-1 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Guardar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingBook(null);
+                        setEditingBookTitle('');
+                      }}
+                      className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-600 rounded-md hover:bg-gray-300 transition-colors"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                    {libro.titulo}
+                  </h3>
+                  <p className="text-sm text-gray-500 text-center mb-4">
+                    Subido el {new Date(libro.created_at).toLocaleDateString()}
+                  </p>
+                  <div className="flex justify-center space-x-2">
+                    <button
+                      onClick={() => handleEditBook(libro)}
+                      className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                    >
+                      <Edit2 className="h-4 w-4 mr-1" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => setShowAccessForm(true)}
+                      className="inline-flex items-center px-3 py-1 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Dar Acceso
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </motion.div>
         ))}
@@ -454,10 +559,10 @@ export default function AccessManager() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Usuario
+                  Libro
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Libro
+                  Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Estado
@@ -465,55 +570,124 @@ export default function AccessManager() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Expira
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAccesses.map(access => (
+              {filteredAccesses.map((access) => (
                 <tr key={access.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{access.email}</div>
-                    <div className="text-sm text-gray-500">
-                      Creado el {new Date(access.created_at).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{access.libro.titulo}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      access.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {access.is_active ? 'Activo' : 'Revocado'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(access.expires_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-3">
-                      <a
-                        href={`/libro-seguro/${access.token}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-primary-dark"
-                        title="Ver libro"
-                      >
-                        <ExternalLink className="h-5 w-5" />
-                      </a>
-                      {access.is_active && (
+                  {editingAccess?.id === access.id ? (
+                    <>
+                      <td colSpan={4} className="px-6 py-4">
+                        <div className="flex space-x-4">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Email
+                            </label>
+                            <input
+                              type="email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              className="w-full px-3 py-2 border rounded-md"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Fecha de Expiración
+                            </label>
+                            <input
+                              type="date"
+                              value={expiresAt}
+                              onChange={(e) => setExpiresAt(e.target.value)}
+                              className="w-full px-3 py-2 border rounded-md"
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
-                          onClick={() => handleRevokeAccess(access.id)}
-                          className="text-red-600 hover:text-red-700"
-                          title="Revocar acceso"
+                          onClick={handleUpdate}
+                          className="text-primary hover:text-primary-dark mr-3"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Check className="w-5 h-5" />
                         </button>
-                      )}
-                    </div>
-                  </td>
+                        <button
+                          onClick={() => setEditingAccess(null)}
+                          className="text-gray-400 hover:text-gray-500"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Book className="w-5 h-5 text-primary mr-2" />
+                          <div className="text-sm font-medium text-gray-900">
+                            {access.libro.titulo}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Mail className="w-5 h-5 text-gray-400 mr-2" />
+                          <div className="text-sm text-gray-900">{access.email}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => toggleActive(access.id, access.is_active)}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                            access.is_active
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {access.is_active ? 'Activo' : 'Inactivo'}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Clock className="w-5 h-5 text-gray-400 mr-2" />
+                          <div className="text-sm text-gray-900">
+                            {format(new Date(access.expires_at), "d 'de' MMMM, yyyy", {
+                              locale: es,
+                            })}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-3">
+                          <a
+                            href={`/libro-seguro/${access.token}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:text-primary-dark"
+                            title="Ver libro"
+                          >
+                            <ExternalLink className="h-5 w-5" />
+                          </a>
+                          <button
+                            onClick={() => handleEdit(access)}
+                            className="text-blue-600 hover:text-blue-700"
+                            title="Editar acceso"
+                          >
+                            <Edit2 className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(access.id)}
+                            className="text-red-600 hover:text-red-700"
+                            title="Eliminar acceso"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))}
               {filteredAccesses.length === 0 && (
