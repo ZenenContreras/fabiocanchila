@@ -3,17 +3,17 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lock, AlertCircle, BookOpen, Mail } from 'lucide-react';
 
-interface SecureBookData {
-  title: string;
-  pdfUrl: string;
-  buyerEmail: string;
+interface LibroData {
+  titulo: string;
+  archivo_url: string;
+  email: string;
 }
 
 export default function SecureBookViewer() {
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bookData, setBookData] = useState<SecureBookData | null>(null);
+  const [libroData, setLibroData] = useState<LibroData | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
@@ -28,27 +28,41 @@ export default function SecureBookViewer() {
       setError(null);
 
       const { data: accessData, error: accessError } = await supabase
-        .from('secure_access_tokens')
-        .select('*, books(*)')
+        .from('acceso_pdf')
+        .select(`
+          email,
+          libro:libro_id (
+            titulo,
+            archivo_url
+          )
+        `)
         .eq('token', token)
         .single();
 
       if (accessError) throw new Error('Token de acceso inválido');
       if (!accessData) throw new Error('Acceso no encontrado');
-      if (new Date(accessData.expires_at) < new Date()) {
-        throw new Error('El link de acceso ha expirado');
-      }
-      if (!accessData.is_active) {
-        throw new Error('Este link de acceso ya no está activo');
+      
+      // Verificar si el acceso está activo y no ha expirado
+      const { data: activeAccess, error: activeError } = await supabase
+        .from('acceso_pdf')
+        .select('*')
+        .eq('token', token)
+        .eq('is_active', true)
+        .gte('expires_at', new Date().toISOString())
+        .single();
+
+      if (activeError || !activeAccess) {
+        throw new Error('Este link de acceso ha expirado o no está activo');
       }
 
-      setBookData({
-        title: accessData.books.title,
-        pdfUrl: accessData.books.pdf_url,
-        buyerEmail: accessData.email
+      setLibroData({
+        titulo: accessData.libro.titulo,
+        archivo_url: accessData.libro.archivo_url,
+        email: accessData.email
       });
 
     } catch (err: any) {
+      console.error('Error validando token:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -59,21 +73,25 @@ export default function SecureBookViewer() {
     e.preventDefault();
     setAuthError(null);
 
-    if (!bookData) return;
+    if (!libroData) return;
 
-    if (email.toLowerCase() === bookData.buyerEmail.toLowerCase()) {
+    if (email.toLowerCase() === libroData.email.toLowerCase()) {
       setIsAuthenticated(true);
       
-      // Registrar acceso
-      await supabase
-        .from('access_logs')
-        .insert({
-          token,
-          email,
-          accessed_at: new Date().toISOString()
-        });
+      // Registrar el acceso exitoso
+      try {
+        await supabase
+          .from('acceso_pdf_logs')
+          .insert({
+            acceso_token: token,
+            email: email,
+            accessed_at: new Date().toISOString()
+          });
+      } catch (error) {
+        console.error('Error registrando acceso:', error);
+      }
     } else {
-      setAuthError('Correo electrónico incorrecto');
+      setAuthError('El correo electrónico no coincide con el acceso autorizado');
     }
   };
 
@@ -103,7 +121,7 @@ export default function SecureBookViewer() {
     );
   }
 
-  if (!bookData) return null;
+  if (!libroData) return null;
 
   if (!isAuthenticated) {
     return (
@@ -115,7 +133,7 @@ export default function SecureBookViewer() {
               Acceso Protegido
             </h2>
             <p className="text-gray-600">
-              Ingresa tu correo electrónico para acceder al contenido
+              Por favor, verifica tu identidad para acceder al contenido
             </p>
           </div>
 
@@ -148,7 +166,7 @@ export default function SecureBookViewer() {
               type="submit"
               className="w-full bg-primary hover:bg-primary-dark text-white py-3 px-4 rounded-lg transition-colors duration-200"
             >
-              Acceder al Contenido
+              Verificar Acceso
             </button>
           </form>
         </div>
@@ -156,8 +174,23 @@ export default function SecureBookViewer() {
     );
   }
 
+  // Obtener la URL firmada para el archivo PDF
+  const getSignedUrl = async () => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('secure-books')
+        .createSignedUrl(libroData.archivo_url, 3600); // URL válida por 1 hora
+
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error obteniendo URL firmada:', error);
+      return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-20 pb-16">
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -165,10 +198,10 @@ export default function SecureBookViewer() {
               <BookOpen className="h-8 w-8 text-primary mr-3" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  {bookData.title}
+                  {libroData.titulo}
                 </h1>
                 <p className="text-sm text-gray-500">
-                  Acceso exclusivo para {bookData.buyerEmail}
+                  Acceso exclusivo para {libroData.email}
                 </p>
               </div>
             </div>
@@ -183,8 +216,9 @@ export default function SecureBookViewer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="relative" style={{ height: 'calc(100vh - 200px)' }}>
+            {/* Usamos un iframe con la URL firmada */}
             <iframe
-              src={`${bookData.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+              src={`https://docs.google.com/viewer?url=${encodeURIComponent(libroData.archivo_url)}&embedded=true`}
               className="w-full h-full"
               style={{
                 pointerEvents: 'none',
