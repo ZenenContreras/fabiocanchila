@@ -11,6 +11,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+interface AdminConfig {
+  admin_email: string;
+  is_active: boolean;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -43,32 +48,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const checkAdminStatus = async (email: string) => {
-    if (!email) {
-      setIsAdmin(false);
-      return;
-    }
+    setIsAdmin(false); // Establecer como false por defecto
+    
+    if (!email) return;
 
     try {
       const { data, error } = await withRetry<{
-        data: { admin_email: string }[] | null;
+        data: AdminConfig | null;
         error: any;
       }>(() =>
         supabase
           .from('admin_config')
-          .select('admin_email')
-          .eq('admin_email', email)
+          .select('admin_email, is_active')
+          .eq('admin_email', email.toLowerCase())
+          .eq('is_active', true)
+          .single()
       );
 
-      if (error) {
-        console.error('Error checking admin status:', error);
+      if (error || !data) {
+        console.error('Error o no datos al verificar estado de admin:', error);
         setIsAdmin(false);
         return;
       }
 
-      // Check if any rows were returned
-      setIsAdmin(data && data.length > 0);
+      // Solo establecer como admin si el email coincide exactamente
+      setIsAdmin(data.admin_email.toLowerCase() === email.toLowerCase());
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error('Error verificando estado de admin:', error);
       setIsAdmin(false);
     }
   };

@@ -31,7 +31,8 @@ export default function SecureBookViewer() {
         .from('acceso_pdf')
         .select(`
           email,
-          libro:libro_id (
+          libro_id,
+          libro:libro_pdf!inner (
             titulo,
             archivo_url
           )
@@ -40,7 +41,7 @@ export default function SecureBookViewer() {
         .single();
 
       if (accessError) throw new Error('Token de acceso inválido');
-      if (!accessData) throw new Error('Acceso no encontrado');
+      if (!accessData || !accessData.libro) throw new Error('Acceso no encontrado');
       
       // Verificar si el acceso está activo y no ha expirado
       const { data: activeAccess, error: activeError } = await supabase
@@ -56,8 +57,8 @@ export default function SecureBookViewer() {
       }
 
       setLibroData({
-        titulo: accessData.libro?.titulo || '',
-        archivo_url: accessData.libro?.archivo_url || '',
+        titulo: accessData.libro.titulo,
+        archivo_url: accessData.libro.archivo_url,
         email: accessData.email
       });
 
@@ -205,8 +206,9 @@ export default function SecureBookViewer() {
             style={{ height: 'calc(100vh - 200px)' }}
             onContextMenu={(e) => e.preventDefault()}
           >
-            <iframe
-              src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0&view=FitH`}
+            <object
+              data={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
+              type="application/pdf"
               className="w-full h-full"
               style={{ 
                 border: 'none',
@@ -215,8 +217,9 @@ export default function SecureBookViewer() {
                 MozUserSelect: 'none',
                 msUserSelect: 'none',
               }}
-              onContextMenu={(e) => e.preventDefault()}
-            />
+            >
+              <p>Tu navegador no puede mostrar el PDF. <a href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}`}>Haz clic aquí para verlo</a></p>
+            </object>
             <div 
               className="absolute inset-0" 
               style={{ 
