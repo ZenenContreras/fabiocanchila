@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface LibroPdf {
+interface Libro {
   id: string;
   titulo: string;
   archivo_url: string;
@@ -20,15 +20,28 @@ interface Access {
   created_at: string;
   expires_at: string;
   is_active: boolean;
-  libro: {
-    titulo: string;
-    id: string;
-  };
+  libro: Libro;
+}
+
+interface NewAccess {
+  email: string;
+  libroId: string;
+  expiresAt: string;
+}
+
+interface SupabaseAccess {
+  id: string;
+  email: string;
+  token: string;
+  created_at: string;
+  expires_at: string;
+  is_active: boolean;
+  libro: Libro;
 }
 
 export default function AccessManager() {
   const { session, user } = useAuth();
-  const [libros, setLibros] = useState<LibroPdf[]>([]);
+  const [libros, setLibros] = useState<Libro[]>([]);
   const [accesses, setAccesses] = useState<Access[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +56,7 @@ export default function AccessManager() {
   });
   
   // Estado para el formulario de nuevo acceso
-  const [newAccess, setNewAccess] = useState({
+  const [newAccess, setNewAccess] = useState<NewAccess>({
     email: '',
     libroId: '',
     expiresAt: ''
@@ -58,7 +71,7 @@ export default function AccessManager() {
   const [expiresAt, setExpiresAt] = useState('');
 
   // Estado para editar libro
-  const [editingBook, setEditingBook] = useState<LibroPdf | null>(null);
+  const [editingBook, setEditingBook] = useState<Libro | null>(null);
   const [editingBookTitle, setEditingBookTitle] = useState('');
 
   useEffect(() => {
@@ -154,21 +167,55 @@ export default function AccessManager() {
   const loadAccesses = async () => {
     try {
       setLoading(true);
+      setError(null);
+
       const { data, error } = await supabase
         .from('acceso_pdf')
         .select(`
-          *,
-          libro:libro_id (
+          id,
+          email,
+          token,
+          created_at,
+          expires_at,
+          is_active,
+          libro:libro_pdf!acceso_pdf_libro_id_fkey (
+            id,
             titulo,
-            id
+            archivo_url,
+            created_at
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setAccesses(data || []);
-    } catch (error) {
-      console.error('Error cargando accesos:', error);
+      if (error) {
+        console.error('Error cargando accesos:', error);
+        throw error;
+      }
+
+      if (!data) {
+        setAccesses([]);
+        return;
+      }
+
+      const formattedAccesses: Access[] = data.map((access: any) => ({
+        id: access.id,
+        email: access.email,
+        token: access.token,
+        created_at: access.created_at,
+        expires_at: access.expires_at,
+        is_active: access.is_active,
+        libro: {
+          id: access.libro.id,
+          titulo: access.libro.titulo,
+          archivo_url: access.libro.archivo_url,
+          created_at: access.libro.created_at
+        }
+      }));
+
+      setAccesses(formattedAccesses);
+    } catch (err) {
+      console.error('Error cargando accesos:', err);
+      setError('Error al cargar los accesos');
     } finally {
       setLoading(false);
     }
@@ -183,22 +230,58 @@ export default function AccessManager() {
         throw new Error('Por favor completa todos los campos');
       }
 
-      const { error } = await supabase
+      const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+      const { data: newAccessData, error } = await supabase
         .from('acceso_pdf')
         .insert({
           email: newAccess.email.toLowerCase(),
           libro_id: newAccess.libroId,
+          token: token,
           expires_at: new Date(newAccess.expiresAt).toISOString(),
-          is_active: true
-        });
+          is_active: true,
+          created_at: new Date().toISOString()
+        })
+        .select(`
+          id,
+          email,
+          token,
+          created_at,
+          expires_at,
+          is_active,
+          libro:libro_pdf!acceso_pdf_libro_id_fkey (
+            id,
+            titulo,
+            archivo_url,
+            created_at
+          )
+        `)
+        .single();
 
       if (error) throw error;
 
-      await loadAccesses();
-      setNewAccess({ email: '', libroId: '', expiresAt: '' });
-      setShowAccessForm(false);
+      if (newAccessData) {
+        const formattedAccess: Access = {
+          id: newAccessData.id,
+          email: newAccessData.email,
+          token: newAccessData.token,
+          created_at: newAccessData.created_at,
+          expires_at: newAccessData.expires_at,
+          is_active: newAccessData.is_active,
+          libro: {
+            id: newAccessData.libro.id,
+            titulo: newAccessData.libro.titulo,
+            archivo_url: newAccessData.libro.archivo_url,
+            created_at: newAccessData.libro.created_at
+          }
+        };
 
+        setAccesses(prev => [formattedAccess, ...prev]);
+        setNewAccess({ email: '', libroId: '', expiresAt: '' });
+        setShowAccessForm(false);
+      }
     } catch (err: any) {
+      console.error('Error creando acceso:', err);
       setError(err.message);
     }
   };
@@ -259,7 +342,7 @@ export default function AccessManager() {
     }
   };
 
-  const handleEditBook = (libro: LibroPdf) => {
+  const handleEditBook = (libro: Libro) => {
     setEditingBook(libro);
     setEditingBookTitle(libro.titulo);
   };
@@ -281,6 +364,25 @@ export default function AccessManager() {
       setEditingBookTitle('');
     } catch (err: any) {
       console.error('Error actualizando libro:', err);
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteBook = async (id: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este libro? Se eliminarán también todos los accesos asociados.')) return;
+
+    try {
+      setError(null);
+      const { error } = await supabase
+        .from('libro_pdf')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      await fetchLibros();
+      await loadAccesses();
+    } catch (err: any) {
+      console.error('Error eliminando libro:', err);
       setError(err.message);
     }
   };
@@ -312,170 +414,76 @@ export default function AccessManager() {
 
   return (
     <div className="space-y-8">
-      {/* Botones de acción principales */}
-      <div className="flex space-x-4">
-        <button
-          onClick={() => setShowUploadForm(!showUploadForm)}
-          className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-        >
-          <Upload className="h-5 w-5 mr-2" />
-          {showUploadForm ? 'Cancelar' : 'Subir Nuevo Libro'}
-        </button>
-        <button
-          onClick={() => setShowAccessForm(!showAccessForm)}
-          className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          {showAccessForm ? 'Cancelar' : 'Crear Nuevo Acceso'}
-        </button>
-      </div>
-
-      {/* Formulario para subir nuevo libro */}
-      {showUploadForm && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-50 p-6 rounded-lg shadow-sm"
-        >
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Subir Nuevo Libro
-          </h3>
-          <form onSubmit={handleUploadBook} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Título del Libro
-                </label>
-                <input
-                  type="text"
-                  value={newBook.titulo}
-                  onChange={(e) => setNewBook(prev => ({ ...prev, titulo: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ingresa el título del libro"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Archivo PDF
-                </label>
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  required
-                />
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={uploading}
-                className={`inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg transition-colors ${
-                  uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-dark'
-                }`}
-              >
-                <Upload className="h-5 w-5 mr-2" />
-                {uploading ? 'Subiendo...' : 'Subir Libro'}
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      )}
-
-      {/* Formulario para nuevo acceso */}
-      {showAccessForm && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-50 p-6 rounded-lg shadow-sm"
-        >
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Crear Nuevo Acceso
-          </h3>
-          <form onSubmit={handleCreateAccess} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  value={newAccess.email}
-                  onChange={(e) => setNewAccess(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="usuario@email.com"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Libro
-                </label>
-                <select
-                  value={newAccess.libroId}
-                  onChange={(e) => setNewAccess(prev => ({ ...prev, libroId: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  required
-                >
-                  <option value="">Selecciona un libro</option>
-                  {libros.map(libro => (
-                    <option key={libro.id} value={libro.id}>
-                      {libro.titulo}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de Expiración
-                </label>
-                <input
-                  type="date"
-                  value={newAccess.expiresAt}
-                  onChange={(e) => setNewAccess(prev => ({ ...prev, expiresAt: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  min={new Date().toISOString().split('T')[0]}
-                  required
-                />
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Crear Acceso
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      )}
-
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-          {error}
+      <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Gestión de Accesos</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Administra los accesos a los libros digitales
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setShowUploadForm(true)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 w-full sm:w-auto justify-center"
+            >
+              <Upload className="h-5 w-5 mr-2" />
+              Subir Libro
+            </button>
+            <button
+              onClick={() => setShowAccessForm(true)}
+              className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-200 w-full sm:w-auto justify-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Nuevo Acceso
+            </button>
+          </div>
         </div>
-      )}
 
-      {/* Grid de Libros */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {libros.map((libro, index) => (
-          <motion.div
-            key={libro.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="bg-white rounded-lg shadow-lg overflow-hidden"
-          >
-            <div className="p-6">
-              <div className="flex items-center justify-center w-16 h-16 bg-primary-light rounded-lg mb-4 mx-auto">
-                <Book className="h-8 w-8 text-primary" />
+        {/* Barra de búsqueda */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por email o título del libro..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        {/* Grid de Libros */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          {libros.map((libro, index) => (
+            <motion.div
+              key={libro.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              className="bg-white rounded-lg shadow p-4 border border-gray-200 flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-primary-light rounded-lg">
+                  <Book className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEditBook(libro)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    title="Editar libro"
+                  >
+                    <Edit2 className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBook(libro.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                    title="Eliminar libro"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
               
               {editingBook?.id === libro.id ? (
@@ -487,10 +495,10 @@ export default function AccessManager() {
                     className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="Título del libro"
                   />
-                  <div className="flex justify-center space-x-2">
+                  <div className="flex justify-end space-x-2">
                     <button
                       onClick={handleUpdateBook}
-                      className="inline-flex items-center px-3 py-1 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                      className="inline-flex items-center px-3 py-1 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors text-sm"
                     >
                       <Check className="h-4 w-4 mr-1" />
                       Guardar
@@ -500,7 +508,7 @@ export default function AccessManager() {
                         setEditingBook(null);
                         setEditingBookTitle('');
                       }}
-                      className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-600 rounded-md hover:bg-gray-300 transition-colors"
+                      className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-600 rounded-md hover:bg-gray-300 transition-colors text-sm"
                     >
                       <X className="h-4 w-4 mr-1" />
                       Cancelar
@@ -509,198 +517,367 @@ export default function AccessManager() {
                 </div>
               ) : (
                 <>
-                  <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 flex-grow">
                     {libro.titulo}
                   </h3>
-                  <p className="text-sm text-gray-500 text-center mb-4">
-                    Subido el {new Date(libro.created_at).toLocaleDateString()}
-                  </p>
-                  <div className="flex justify-center space-x-2">
-                    <button
-                      onClick={() => handleEditBook(libro)}
-                      className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
-                    >
-                      <Edit2 className="h-4 w-4 mr-1" />
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => setShowAccessForm(true)}
-                      className="inline-flex items-center px-3 py-1 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Dar Acceso
-                    </button>
+                  <div className="text-sm text-gray-500 mb-4">
+                    <p>Subido el {format(new Date(libro.created_at), 'PPP', { locale: es })}</p>
+                    <p>{accesses.filter(a => a.libro.id === libro.id).length} accesos activos</p>
                   </div>
+                  <button
+                    onClick={() => {
+                      setNewAccess(prev => ({ ...prev, libroId: libro.id }));
+                      setShowAccessForm(true);
+                    }}
+                    className="w-full inline-flex items-center justify-center px-3 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors text-sm"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Dar Acceso
+                  </button>
                 </>
               )}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Lista de Accesos */}
-      <div className="mt-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Accesos Activos</h2>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Buscar por correo o título..."
-            />
-          </div>
+            </motion.div>
+          ))}
         </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Libro
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Expira
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAccesses.map((access) => (
-                <tr key={access.id} className="hover:bg-gray-50">
-                  {editingAccess?.id === access.id ? (
-                    <>
-                      <td colSpan={4} className="px-6 py-4">
-                        <div className="flex space-x-4">
-                          <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Email
-                            </label>
-                            <input
-                              type="email"
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              className="w-full px-3 py-2 border rounded-md"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Fecha de Expiración
-                            </label>
-                            <input
-                              type="date"
-                              value={expiresAt}
-                              onChange={(e) => setExpiresAt(e.target.value)}
-                              className="w-full px-3 py-2 border rounded-md"
-                            />
-                          </div>
-                        </div>
+        {/* Tabla de Accesos */}
+        <div className="overflow-x-auto -mx-4 sm:-mx-6">
+          <div className="inline-block min-w-full align-middle">
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+              <table className="min-w-full divide-y divide-gray-300">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Libro</th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Estado</th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Expira</th>
+                    <th className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                      <span className="sr-only">Acciones</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {filteredAccesses.map((access) => (
+                    <tr key={access.id} className="hover:bg-gray-50">
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                        <div className="font-medium text-gray-900 line-clamp-1">{access.libro.titulo}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={handleUpdate}
-                          className="text-primary hover:text-primary-dark mr-3"
-                        >
-                          <Check className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => setEditingAccess(null)}
-                          className="text-gray-400 hover:text-gray-500"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {editingAccess?.id === access.id ? (
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-primary focus:border-transparent"
+                          />
+                        ) : (
+                          <span className="line-clamp-1">{access.email}</span>
+                        )}
                       </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Book className="w-5 h-5 text-primary mr-2" />
-                          <div className="text-sm font-medium text-gray-900">
-                            {access.libro.titulo}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Mail className="w-5 h-5 text-gray-400 mr-2" />
-                          <div className="text-sm text-gray-900">{access.email}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm">
                         <button
                           onClick={() => toggleActive(access.id, access.is_active)}
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             access.is_active
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                              : 'bg-red-100 text-red-800 hover:bg-red-200'
                           }`}
                         >
-                          {access.is_active ? 'Activo' : 'Inactivo'}
+                          {access.is_active ? (
+                            <>
+                              <Eye className="h-3 w-3 mr-1" />
+                              Activo
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="h-3 w-3 mr-1" />
+                              Inactivo
+                            </>
+                          )}
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Clock className="w-5 h-5 text-gray-400 mr-2" />
-                          <div className="text-sm text-gray-900">
-                            {format(new Date(access.expires_at), "d 'de' MMMM, yyyy", {
-                              locale: es,
-                            })}
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {editingAccess?.id === access.id ? (
+                          <input
+                            type="date"
+                            value={expiresAt}
+                            onChange={(e) => setExpiresAt(e.target.value)}
+                            className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-primary focus:border-transparent"
+                          />
+                        ) : (
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1 text-gray-400" />
+                            {format(new Date(access.expires_at), 'PPP', { locale: es })}
                           </div>
-                        </div>
+                        )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-3">
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        <div className="flex items-center justify-end space-x-2">
                           <a
                             href={`/libro-seguro/${access.token}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-primary hover:text-primary-dark"
+                            className="p-1 text-primary hover:text-primary-dark rounded-full hover:bg-gray-100 transition-colors"
                             title="Ver libro"
                           >
                             <ExternalLink className="h-5 w-5" />
                           </a>
-                          <button
-                            onClick={() => handleEdit(access)}
-                            className="text-blue-600 hover:text-blue-700"
-                            title="Editar acceso"
-                          >
-                            <Edit2 className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(access.id)}
-                            className="text-red-600 hover:text-red-700"
-                            title="Eliminar acceso"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
+                          {editingAccess?.id === access.id ? (
+                            <>
+                              <button
+                                onClick={handleUpdate}
+                                className="p-1 text-green-600 hover:text-green-700 rounded-full hover:bg-green-50 transition-colors"
+                                title="Guardar cambios"
+                              >
+                                <Check className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => setEditingAccess(null)}
+                                className="p-1 text-gray-600 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors"
+                                title="Cancelar"
+                              >
+                                <X className="h-5 w-5" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleEdit(access)}
+                                className="p-1 text-blue-600 hover:text-blue-700 rounded-full hover:bg-blue-50 transition-colors"
+                                title="Editar acceso"
+                              >
+                                <Edit2 className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(access.id)}
+                                className="p-1 text-red-600 hover:text-red-700 rounded-full hover:bg-red-50 transition-colors"
+                                title="Eliminar acceso"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
-                    </>
-                  )}
-                </tr>
-              ))}
-              {filteredAccesses.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    No se encontraron registros de acceso
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Modal de Subir Libro */}
+      {showUploadForm && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowUploadForm(false)} />
+
+            <div className="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  onClick={() => setShowUploadForm(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="sm:flex sm:items-start">
+                <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">
+                    Subir Nuevo Libro
+                  </h3>
+
+                  <form onSubmit={handleUploadBook} className="mt-6 space-y-4">
+                    <div>
+                      <label htmlFor="titulo" className="block text-sm font-medium text-gray-700">
+                        Título del Libro
+                      </label>
+                      <input
+                        type="text"
+                        id="titulo"
+                        value={newBook.titulo}
+                        onChange={(e) => setNewBook({ ...newBook, titulo: e.target.value })}
+                        className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700">
+                        Archivo PDF
+                      </label>
+                      <input
+                        type="file"
+                        id="file-upload"
+                        accept=".pdf"
+                        onChange={handleFileChange}
+                        className="block w-full mt-1 text-sm text-gray-500
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-primary file:text-white
+                          hover:file:bg-primary-dark
+                          file:cursor-pointer cursor-pointer"
+                        required
+                      />
+                    </div>
+
+                    {error && (
+                      <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                      <button
+                        type="submit"
+                        disabled={uploading}
+                        className={`inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm ${
+                          uploading ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        {uploading ? (
+                          <>
+                            <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                            Subiendo...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-5 w-5 mr-2" />
+                            Subir Libro
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowUploadForm(false)}
+                        disabled={uploading}
+                        className="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Nuevo Acceso */}
+      {showAccessForm && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => setShowAccessForm(false)} />
+
+            <div className="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  onClick={() => setShowAccessForm(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="sm:flex sm:items-start">
+                <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">
+                    Crear Nuevo Acceso
+                  </h3>
+
+                  <form onSubmit={handleCreateAccess} className="mt-6 space-y-4">
+                    <div>
+                      <label htmlFor="libro" className="block text-sm font-medium text-gray-700">
+                        Libro
+                      </label>
+                      <select
+                        id="libro"
+                        value={newAccess.libroId}
+                        onChange={(e) => setNewAccess({ ...newAccess, libroId: e.target.value })}
+                        className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+                        required
+                      >
+                        <option value="">Selecciona un libro</option>
+                        {libros.map((libro) => (
+                          <option key={libro.id} value={libro.id}>
+                            {libro.titulo}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Mail className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="email"
+                          id="email"
+                          value={newAccess.email}
+                          onChange={(e) => setNewAccess({ ...newAccess, email: e.target.value })}
+                          className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+                          placeholder="usuario@ejemplo.com"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="expires" className="block text-sm font-medium text-gray-700">
+                        Fecha de Expiración
+                      </label>
+                      <div className="mt-1 relative rounded-md shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Clock className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="date"
+                          id="expires"
+                          value={newAccess.expiresAt}
+                          onChange={(e) => setNewAccess({ ...newAccess, expiresAt: e.target.value })}
+                          className="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                      <button
+                        type="submit"
+                        className="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
+                      >
+                        Crear Acceso
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAccessForm(false)}
+                        className="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

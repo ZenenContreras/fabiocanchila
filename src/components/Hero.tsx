@@ -46,7 +46,7 @@ export default function Hero() {
   const testimonials = [
     {
       name: "Juan Carlos Castro",
-      role: "Docente e Investigadorl",
+      role: "Docente e Investigador",
       quote: "Con el Canvas del Éxito y la Prosperidad identifiqué oportunidades de emprendimiento que se complementan con mi trabajo actual. Ahora diversifico mis ingresos creando y comercializando productos digitales"
     },
     {

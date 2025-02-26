@@ -31,29 +31,23 @@ export default function SecureBookViewer() {
         .from('acceso_pdf')
         .select(`
           email,
-          libro_id,
-          libro:libro_pdf!inner (
+          libro:libro_pdf!acceso_pdf_libro_id_fkey (
             titulo,
             archivo_url
           )
         `)
         .eq('token', token)
-        .single();
-
-      if (accessError) throw new Error('Token de acceso inválido');
-      if (!accessData || !accessData.libro) throw new Error('Acceso no encontrado');
-      
-      // Verificar si el acceso está activo y no ha expirado
-      const { data: activeAccess, error: activeError } = await supabase
-        .from('acceso_pdf')
-        .select('*')
-        .eq('token', token)
         .eq('is_active', true)
         .gte('expires_at', new Date().toISOString())
         .single();
 
-      if (activeError || !activeAccess) {
-        throw new Error('Este link de acceso ha expirado o no está activo');
+      if (accessError) {
+        console.error('Error validando token:', accessError);
+        throw new Error('Token de acceso inválido');
+      }
+      
+      if (!accessData || !accessData.libro) {
+        throw new Error('Acceso no encontrado o expirado');
       }
 
       setLibroData({
