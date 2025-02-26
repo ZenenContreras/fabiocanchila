@@ -38,7 +38,6 @@ export default function SecureBookViewer() {
         `)
         .eq('token', token)
         .eq('is_active', true)
-        .gte('expires_at', new Date().toISOString())
         .single();
 
       if (accessError) {
@@ -47,7 +46,7 @@ export default function SecureBookViewer() {
       }
       
       if (!accessData || !accessData.libro) {
-        throw new Error('Acceso no encontrado o expirado');
+        throw new Error('Acceso no encontrado');
       }
 
       setLibroData({
@@ -75,13 +74,17 @@ export default function SecureBookViewer() {
       
       // Registrar el acceso exitoso
       try {
-        await supabase
+        const { error } = await supabase
           .from('acceso_pdf_logs')
           .insert({
             acceso_token: token,
             email: email,
             accessed_at: new Date().toISOString()
           });
+        
+        if (error && error.code !== '404') {
+          console.error('Error registrando acceso:', error);
+        }
       } catch (error) {
         console.error('Error registrando acceso:', error);
       }
@@ -196,46 +199,29 @@ export default function SecureBookViewer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div 
-            className="relative" 
+            className="relative w-full" 
             style={{ height: 'calc(100vh - 200px)' }}
-            onContextMenu={(e) => e.preventDefault()}
           >
-            <object
-              data={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
-              type="application/pdf"
+            <iframe
+              src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
               className="w-full h-full"
-              style={{ 
+              style={{
                 border: 'none',
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
                 MozUserSelect: 'none',
                 msUserSelect: 'none',
               }}
-            >
-              <p>Tu navegador no puede mostrar el PDF. <a href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}`}>Haz clic aquí para verlo</a></p>
-            </object>
+              title={libroData.titulo}
+            />
             <div 
-              className="absolute inset-0" 
+              className="absolute inset-0 pointer-events-none" 
               style={{ 
-                background: 'transparent',
-                pointerEvents: 'none',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                MozUserSelect: 'none',
-                msUserSelect: 'none',
+                background: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill-opacity="0.05"><text x="50%" y="50%" font-size="12" fill="%23000" text-anchor="middle" alignment-baseline="middle">${libroData.email}</text></svg>')`,
+                mixBlendMode: 'multiply',
+                opacity: 0.5
               }}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              <div 
-                className="absolute inset-0 select-none"
-                style={{
-                  background: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill-opacity="0.05"><text x="50%" y="50%" font-size="12" fill="%23000" text-anchor="middle" alignment-baseline="middle">${libroData.email}</text></svg>')`,
-                  pointerEvents: 'none',
-                  mixBlendMode: 'multiply',
-                  opacity: 0.5
-                }}
-              />
-            </div>
+            />
           </div>
         </div>
 
