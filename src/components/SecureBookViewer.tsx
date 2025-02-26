@@ -9,6 +9,24 @@ interface LibroData {
   email: string;
 }
 
+interface SupabaseLibro {
+  titulo: string;
+  archivo_url: string;
+}
+
+interface SupabaseAccess {
+  email: string;
+  libro: SupabaseLibro;
+}
+
+interface SupabaseResponse {
+  email: string;
+  libro: {
+    titulo: string;
+    archivo_url: string;
+  };
+}
+
 export default function SecureBookViewer() {
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
@@ -17,10 +35,6 @@ export default function SecureBookViewer() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
-
-  useEffect(() => {
-    validateToken();
-  }, [token]);
 
   const validateToken = async () => {
     try {
@@ -49,10 +63,19 @@ export default function SecureBookViewer() {
         throw new Error('Acceso no encontrado');
       }
 
+      const response = accessData as unknown as SupabaseResponse;
+      const access: SupabaseAccess = {
+        email: response.email,
+        libro: {
+          titulo: response.libro.titulo,
+          archivo_url: response.libro.archivo_url
+        }
+      };
+
       setLibroData({
-        titulo: accessData.libro.titulo,
-        archivo_url: accessData.libro.archivo_url,
-        email: accessData.email
+        titulo: access.libro.titulo,
+        archivo_url: access.libro.archivo_url,
+        email: access.email
       });
 
     } catch (err: any) {
@@ -63,6 +86,10 @@ export default function SecureBookViewer() {
     }
   };
 
+  useEffect(() => {
+    validateToken();
+  }, [token]);
+
   const handleAuthentication = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
@@ -72,22 +99,9 @@ export default function SecureBookViewer() {
     if (email.toLowerCase() === libroData.email.toLowerCase()) {
       setIsAuthenticated(true);
       
-      // Registrar el acceso exitoso
-      try {
-        const { error } = await supabase
-          .from('acceso_pdf_logs')
-          .insert({
-            acceso_token: token,
-            email: email,
-            accessed_at: new Date().toISOString()
-          });
-        
-        if (error && error.code !== '404') {
-          console.error('Error registrando acceso:', error);
-        }
-      } catch (error) {
-        console.error('Error registrando acceso:', error);
-      }
+      // No necesitamos registrar el acceso aquí ya que la tabla acceso_pdf
+      // ya contiene la información del acceso y el token
+      
     } else {
       setAuthError('El correo electrónico no coincide con el acceso autorizado');
     }
@@ -172,6 +186,8 @@ export default function SecureBookViewer() {
     );
   }
 
+  const pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}`;
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="bg-white shadow">
@@ -202,7 +218,7 @@ export default function SecureBookViewer() {
           onContextMenu={(e) => e.preventDefault()}
         >
           <iframe
-            src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
+            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
             className="w-full h-full"
             style={{
               border: 'none',
