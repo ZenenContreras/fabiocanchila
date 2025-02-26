@@ -173,9 +173,9 @@ export default function SecureBookViewer() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-16">
+    <div className="min-h-screen bg-gray-50 pt-20">
       <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl  px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <BookOpen className="h-8 w-8 text-primary mr-3" />
@@ -196,39 +196,37 @@ export default function SecureBookViewer() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="w-full h-[calc(100vh-110px)]">
+        <div 
+          className="relative w-full h-full" 
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <iframe
+            src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
+            className="w-full h-full"
+            style={{
+              border: 'none',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              MozUserSelect: 'none',
+              msUserSelect: 'none',
+              pointerEvents: 'all'
+            }}
+            title={libroData.titulo}
+          />
           <div 
-            className="relative w-full" 
-            style={{ height: 'calc(100vh - 200px)' }}
-          >
-            <iframe
-              src={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
-              className="w-full h-full"
-              style={{
-                border: 'none',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                MozUserSelect: 'none',
-                msUserSelect: 'none',
-              }}
-              title={libroData.titulo}
-            />
-            <div 
-              className="absolute inset-0 pointer-events-none" 
-              style={{ 
-                background: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill-opacity="0.05"><text x="50%" y="50%" font-size="12" fill="%23000" text-anchor="middle" alignment-baseline="middle">${libroData.email}</text></svg>')`,
-                mixBlendMode: 'multiply',
-                opacity: 0.5
-              }}
-            />
+            className="absolute inset-0 pointer-events-none select-none" 
+            style={{ 
+              background: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill-opacity="0.05"><text x="50%" y="50%" font-size="12" fill="%23000" text-anchor="middle" alignment-baseline="middle">${libroData.email}</text></svg>')`,
+              mixBlendMode: 'multiply',
+              opacity: 0.5,
+              pointerEvents: 'none'
+            }}
+          />
+          <div className="absolute bottom-0 left-0 right-0 bg-white bg-opacity-100 py-2 px-4 text-center text-sm text-gray-600">
+            <p>Este contenido está protegido y es solo para visualización</p>
+            <p className="text-xs mt-1">Acceso exclusivo para: {libroData.email}</p>
           </div>
-        </div>
-
-        <div className="mt-4 text-center text-sm text-gray-500">
-          <p>Este contenido está protegido y es solo para visualización.</p>
-          <p>No se permite la descarga o copia del material.</p>
-          <p className="text-xs mt-1">Acceso exclusivo para: {libroData.email}</p>
         </div>
       </div>
     </div>
