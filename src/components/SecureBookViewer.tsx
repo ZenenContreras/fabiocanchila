@@ -17,10 +17,14 @@ interface SupabaseLibro {
 interface SupabaseAccess {
   email: string;
   libro: SupabaseLibro;
+  expires_at: string | null;
+  is_active: boolean;
 }
 
 interface SupabaseResponse {
   email: string;
+  expires_at: string | null;
+  is_active: boolean;
   libro: {
     titulo: string;
     archivo_url: string;
@@ -35,42 +39,91 @@ export default function SecureBookViewer() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const validateToken = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      if (!token) {
+        throw new Error('Token no proporcionado');
+      }
+
+      console.log('Validando token:', token);
+
       const { data: accessData, error: accessError } = await supabase
         .from('acceso_pdf')
         .select(`
           email,
+          is_active,
+          expires_at,
           libro:libro_pdf!acceso_pdf_libro_id_fkey (
             titulo,
             archivo_url
           )
         `)
         .eq('token', token)
-        .eq('is_active', true)
         .single();
+
+      console.log('Respuesta de Supabase:', { accessData, accessError });
 
       if (accessError) {
         console.error('Error validando token:', accessError);
         throw new Error('Token de acceso inválido');
       }
       
-      if (!accessData || !accessData.libro) {
+      if (!accessData) {
         throw new Error('Acceso no encontrado');
+      }
+
+      if (!accessData.is_active) {
+        throw new Error('Este acceso ha sido desactivado');
+      }
+
+      if (accessData.expires_at && new Date(accessData.expires_at) < new Date()) {
+        // Desactivar el acceso si ha expirado
+        await supabase
+          .from('acceso_pdf')
+          .update({ is_active: false })
+          .eq('token', token);
+        
+        throw new Error('Este acceso ha expirado');
+      }
+
+      if (!accessData.libro) {
+        throw new Error('El libro asociado no está disponible');
       }
 
       const response = accessData as unknown as SupabaseResponse;
       const access: SupabaseAccess = {
         email: response.email,
+        expires_at: response.expires_at,
+        is_active: response.is_active,
         libro: {
           titulo: response.libro.titulo,
           archivo_url: response.libro.archivo_url
         }
       };
+
+      // Verificar que el archivo existe en el storage
+      try {
+        const { data: fileExists, error: fileError } = await supabase
+          .storage
+          .from('secure-books')
+          .list('', {
+            search: access.libro.archivo_url
+          });
+
+        console.log('Verificación de archivo:', { fileExists, fileError });
+
+        if (fileError || !fileExists || fileExists.length === 0) {
+          throw new Error('El archivo PDF no se encuentra disponible');
+        }
+      } catch (fileErr) {
+        console.error('Error verificando archivo:', fileErr);
+        throw new Error('Error al verificar disponibilidad del archivo');
+      }
 
       setLibroData({
         titulo: access.libro.titulo,
@@ -79,8 +132,8 @@ export default function SecureBookViewer() {
       });
 
     } catch (err: any) {
-      console.error('Error validando token:', err);
-      setError(err.message);
+      console.error('Error en validateToken:', err);
+      setError(err.message || 'Error al validar el acceso');
     } finally {
       setLoading(false);
     }
@@ -98,13 +151,17 @@ export default function SecureBookViewer() {
 
     if (email.toLowerCase() === libroData.email.toLowerCase()) {
       setIsAuthenticated(true);
-      
-      // No necesitamos registrar el acceso aquí ya que la tabla acceso_pdf
-      // ya contiene la información del acceso y el token
-      
     } else {
       setAuthError('El correo electrónico no coincide con el acceso autorizado');
     }
+  };
+
+  const handlePdfError = () => {
+    setPdfError('Error al cargar el PDF. Por favor, intente de nuevo más tarde.');
+    console.error('Error al cargar el PDF:', {
+      url: libroData?.archivo_url,
+      supabaseUrl: import.meta.env.VITE_SUPABASE_URL
+    });
   };
 
   if (loading) {
@@ -217,19 +274,29 @@ export default function SecureBookViewer() {
           className="relative w-full h-full" 
           onContextMenu={(e) => e.preventDefault()}
         >
-          <iframe
-            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
-            className="w-full h-full"
-            style={{
-              border: 'none',
-              userSelect: 'none',
-              WebkitUserSelect: 'none',
-              MozUserSelect: 'none',
-              msUserSelect: 'none',
-              pointerEvents: 'auto'
-            }}
-            title={libroData.titulo}
-          />
+          {pdfError ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <p className="text-red-600">{pdfError}</p>
+              </div>
+            </div>
+          ) : (
+            <iframe
+              src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
+              className="w-full h-full"
+              style={{
+                border: 'none',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
+                pointerEvents: 'auto'
+              }}
+              title={libroData.titulo}
+              onError={handlePdfError}
+            />
+          )}
           <div 
             className="absolute inset-0 pointer-events-none select-none" 
             style={{ 
