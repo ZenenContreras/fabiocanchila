@@ -210,7 +210,7 @@ export default function SecureBookViewer() {
               WebkitUserSelect: 'none',
               MozUserSelect: 'none',
               msUserSelect: 'none',
-              pointerEvents: 'all'
+              pointerEvents: 'auto'
             }}
             title={libroData.titulo}
           />
