@@ -604,11 +604,11 @@ export default function AccessManager() {
                           title="Copiar enlace"
                         >
                           {copiedAccessId === access.id ? (
-                            <div className="absolute -top-8 -left-2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                            <div className="absolute -top-8 -left-8 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
                               ¡Copiado!
                             </div>
                           ) : (
-                            <div className="absolute -top-8 -left-2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute -top-8 -left-8 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                               Copiar link
                             </div>
                           )}
