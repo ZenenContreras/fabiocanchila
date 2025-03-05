@@ -40,7 +40,8 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
         type: 'course',
         title: 'Curso: Transformación Personal',
         link: '#',
-        status: 'available'
+        status: 'available',
+        image: '/TransformacionPersonalPortada.jpg'
       },
       {
         type: 'program',
@@ -123,7 +124,8 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
         type: 'course',
         title: 'Curso: Consolida y Dirigue Equipos Que Garanticen Resultados',
         link: '#',
-        status: 'available'
+        status: 'available',
+        image: '/Curso_ConsolidaYDirigeEquipos.jpeg'
       },
       {
         type: 'program',
@@ -174,13 +176,15 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
         type: 'course',
         title: 'Curso CEP',
         link: '#',
-        status: 'available'
+        status: 'available',
+        image: '/Curso_CEP.jpeg'
       },
       {
         type: 'course',
         title: 'Curso: Consolida y Dirigue Equipos Que Garanticen Resultados',
         link: '#',
-        status: 'available'
+        status: 'available',
+        image: '/Curso_ConsolidaYDirigeEquipos.jpeg'
       },
       {
         type: 'contact',
@@ -203,7 +207,8 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
       {
         type: 'course',
         title: 'Curso de Gestión de Alianzas',
-        status: 'coming-soon'
+        status: 'coming-soon',
+        image: '/Curso_GestionAlianzas.jpeg'
       },
       {
         type: 'contact',
@@ -297,7 +302,7 @@ export default function ValuePropositionPage() {
         className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300"
       >
         <div className="flex items-start space-x-4">
-          {resource.type === 'book' && resource.image ? (
+          {(resource.type === 'book' || resource.type === 'course') && resource.image ? (
             <div className="relative w-16 h-24 mx-auto group perspective">
               <div className="relative preserve-3d group-hover:rotate-y-6 transition-transform duration-500">
                 <img
