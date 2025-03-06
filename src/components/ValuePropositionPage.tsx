@@ -41,13 +41,14 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
         title: 'Curso: Transformación Personal',
         link: 'https://go.hotmart.com/W96797334T?dp=1',
         status: 'available',
-        image: '/TransformacionPersonalPortada.jpg'
+        image: '/Curso_CanvasDelExito.png'
       },
       {
-        type: 'program',
-        title: 'Programa Intensivo',
+        type: 'course',
+        title: 'Programa para el Éxito y la Prosperidad',
         link: 'https://go.hotmart.com/N96879618G?dp=1',
-        status: 'available'
+        status: 'available',
+        image: '/ProgramaE&P.jpg'
       },
       {
         type: 'contact',
@@ -83,16 +84,17 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
         image: '/buenavibraPortada.png'
       },
       {
+        type: 'course',
+        title: 'Programa 2025 Emprendedores y Empresarios',
+        link: 'https://go.hotmart.com/U97908607I?dp=1',
+        status: 'available',
+        image: '/ProgramaMentalidad.jpeg'
+      },
+      {
         type: 'book',
         title: 'Libro: TIP',
         status: 'draft',
         description: 'En desarrollo'
-      },
-      {
-        type: 'program',
-        title: 'Programa 2025 Emprendedores y Empresarios',
-        link: 'https://go.hotmart.com/U97908607I?dp=1',
-        status: 'available'
       },
       {
         type: 'whatsapp',
@@ -128,10 +130,11 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
         image: '/Curso_ConsolidaYDirigeEquipos.jpeg'
       },
       {
-        type: 'program',
+        type: 'course',
         title: 'Programa 2025 Emprendedores y Empresarios',
         link: 'https://go.hotmart.com/U97908607I?dp=1',
-        status: 'available'
+        status: 'available',
+        image: '/ProgramaMentalidad.jpeg'
       },
       {
         type: 'whatsapp',
@@ -154,35 +157,36 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     resources: [
       {
         type: 'book',
-        title: 'Libro CEP',
-        link: '#',
-        status: 'available'
+        title: 'Libro Canvas del Éxito y la Prosperidad',
+        link: 'https://go.hotmart.com/Q97401255X?dp=1',
+        status: 'available',
+        image: '/CanvasPortada.jpg'
       },
       {
         type: 'book',
         title: 'Libro: Buena Vibra Para Vivir Con Valentia',
-        link: '#',
+        link: 'https://go.hotmart.com/D97400047L?dp=1',
         status: 'available',
         image: '/buenavibraPortada.png'
       },
       {
         type: 'book',
         title: 'Libro: Consolida y Dirigue Equipos Que Garanticen Resultados',
-        link: '#',
+        link: 'https://go.hotmart.com/X97279249D?dp=1',
         status: 'available',
         image: '/consolidaequiposPortada.png'
       },
       {
         type: 'course',
-        title: 'Curso CEP',
-        link: '#',
+        title: 'Curso: Transformación Personal',
+        link: 'https://go.hotmart.com/W96797334T?dp=1',
         status: 'available',
-        image: '/Curso_CEP.jpeg'
+        image: '/Curso_CanvasDelExito.png'
       },
       {
         type: 'course',
         title: 'Curso: Consolida y Dirigue Equipos Que Garanticen Resultados',
-        link: '#',
+        link: 'https://go.hotmart.com/V97490299M?dp=1',
         status: 'available',
         image: '/Curso_ConsolidaYDirigeEquipos.jpeg'
       },
@@ -205,7 +209,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
         status: 'coming-soon'
       },
       {
-        type: 'course',
+        type: 'program',
         title: 'Curso de Gestión de Alianzas',
         status: 'coming-soon',
         image: '/Curso_GestionAlianzas.jpeg'
