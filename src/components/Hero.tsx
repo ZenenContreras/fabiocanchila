@@ -135,7 +135,7 @@ export default function Hero() {
                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center w-full sm:w-auto">
                 
                   <Link
-                    to={`/value-proposition/transforma-suenos`}
+                    to={`/propuesta-de-valor/transforma-suenos`}
                     className="inline-flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg hover:bg-primary-dark transform hover:translate-x-1 w-full"
                   >
                     <MousePointerClick className="h-5 w-5 mr-2 group-hover:animate-bounce" />
@@ -238,7 +238,7 @@ export default function Hero() {
                   {proposition.description}
                 </p>
                 <Link
-                  to={`/value-proposition/${proposition.id}`}
+                  to={`/propuesta-de-valor/${proposition.id}`}
                   className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg hover:bg-primary-dark transform hover:translate-x-1"
                 >
                   <MousePointerClick className="h-5 w-5 mr-2 group-hover:animate-bounce" />

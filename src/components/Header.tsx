@@ -27,10 +27,10 @@ export default function Header({ onLoginClick, onLogoutClick, isLoggedIn }: Head
 
   const menuItems = [
     { title: 'Inicio', path: '/' },
-    { title: 'Servicios', path: '/services' },
-    { title: 'Publicaciones', path: '/products' },
+    { title: 'Servicios', path: '/servicios' },
+    { title: 'Publicaciones', path: '/publicaciones' },
     { title: 'Blog', path: '/blog' },
-    { title: 'Sobre Mí', path: '/about' },
+    { title: 'Sobre Mí', path: '/sobremi' },
   ];
 
   if (isLoggedIn && isAdmin) {

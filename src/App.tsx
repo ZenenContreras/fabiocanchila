@@ -47,13 +47,13 @@ function AppContent() {
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Hero />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/services" element={<ServicesPage />} />
-            <Route path="/services/:id" element={<ServiceDetail />} />
+            <Route path="/sobremi" element={<About/>} />
+            <Route path="/servicios" element={<ServicesPage />} />
+            <Route path="/servicios/:id" element={<ServiceDetail />} />
             <Route path="/blog" element={<BlogList />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/value-proposition/:id" element={<ValuePropositionPage />} />
+            <Route path="/publicaciones" element={<Products />} />
+            <Route path="/propuesta-de-valor/:id" element={<ValuePropositionPage />} />
             
             {/* Rutas de administración */}
             <Route 
