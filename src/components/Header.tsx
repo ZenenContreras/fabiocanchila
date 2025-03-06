@@ -30,7 +30,7 @@ export default function Header({ onLoginClick, onLogoutClick, isLoggedIn }: Head
     { title: 'Servicios', path: '/servicios' },
     { title: 'Publicaciones', path: '/publicaciones' },
     { title: 'Blog', path: '/blog' },
-    { title: 'Sobre Mí', path: '/sobremi' },
+    { title: 'Sobre Mí', path: '/sobre-mi' },
   ];
 
   if (isLoggedIn && isAdmin) {

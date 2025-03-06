@@ -47,7 +47,7 @@ function AppContent() {
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Hero />} />
-            <Route path="/sobremi" element={<About/>} />
+            <Route path="/sobre-mi" element={<About/>} />
             <Route path="/servicios" element={<ServicesPage />} />
             <Route path="/servicios/:id" element={<ServiceDetail />} />
             <Route path="/blog" element={<BlogList />} />
