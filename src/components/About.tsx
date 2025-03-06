@@ -239,7 +239,7 @@ export default function About() {
               animate={{ opacity: 1 }}
               className="text-center text-gray-600 text-lg"
             >
-              Explore mis áreas de especialización y logros profesionales
+              Explora mis áreas de especialización y logros profesionales
             </motion.p>
           )}
         </div>
