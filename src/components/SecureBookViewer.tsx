@@ -106,15 +106,20 @@ export default function SecureBookViewer() {
         }
       };
 
-      // Verificar que el archivo existe en el storage de una manera más directa
-      const { data: fileData, error: fileError } = await supabase
+      // Verificar que el archivo existe en el storage
+      const { data: fileExists, error: fileError } = await supabase
         .storage
         .from('secure-books')
-        .download(access.libro.archivo_url);
+        .list('', {
+          limit: 1,
+          search: access.libro.archivo_url
+        });
+
+      console.log('Verificación de archivo:', { fileExists, fileError });
 
       if (fileError) {
         console.error('Error verificando archivo:', fileError);
-        throw new Error('El archivo PDF no está disponible en este momento');
+        throw new Error('Error al verificar disponibilidad del archivo');
       }
 
       setLibroData({
@@ -238,9 +243,9 @@ export default function SecureBookViewer() {
   const pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow">
-        <div className="max-w-7xl  px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <BookOpen className="h-8 w-8 text-primary mr-3" />
@@ -261,7 +266,7 @@ export default function SecureBookViewer() {
         </div>
       </div>
 
-      <div className="w-full h-[calc(100vh-110px)]">
+      <div className="w-full h-[calc(100vh-80px)]">
         <div 
           className="relative w-full h-full" 
           onContextMenu={(e) => e.preventDefault()}
@@ -274,8 +279,9 @@ export default function SecureBookViewer() {
               </div>
             </div>
           ) : (
-            <iframe
-              src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
+            <object
+              data={pdfUrl}
+              type="application/pdf"
               className="w-full h-full"
               style={{
                 border: 'none',
@@ -285,9 +291,22 @@ export default function SecureBookViewer() {
                 msUserSelect: 'none',
                 pointerEvents: 'auto'
               }}
-              title={libroData.titulo}
-              onError={handlePdfError}
-            />
+            >
+              <iframe
+                src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
+                className="w-full h-full"
+                style={{
+                  border: 'none',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  MozUserSelect: 'none',
+                  msUserSelect: 'none',
+                  pointerEvents: 'auto'
+                }}
+                title={libroData.titulo}
+                onError={handlePdfError}
+              />
+            </object>
           )}
           <div 
             className="absolute inset-0 pointer-events-none select-none" 

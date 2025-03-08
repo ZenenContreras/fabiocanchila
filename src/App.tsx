@@ -36,20 +36,6 @@ function AppContent() {
   const { user, signOut } = useAuth();
   useScrollToTop();
 
-  // Ruta especial para el visor de libros seguros
-  if (window.location.pathname.startsWith('/libro-seguro/')) {
-    return (
-      <Suspense fallback={<Loading />}>
-        <Routes>
-          <Route 
-            path="/libro-seguro/:token" 
-            element={<SecureBookViewer />} 
-          />
-        </Routes>
-      </Suspense>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header 
@@ -68,6 +54,7 @@ function AppContent() {
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/publicaciones" element={<Products />} />
             <Route path="/propuesta-de-valor/:id" element={<ValuePropositionPage />} />
+            <Route path="/libro-seguro/:token" element={<SecureBookViewer />} />
             
             {/* Rutas de administración */}
             <Route 
