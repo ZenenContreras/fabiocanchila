@@ -237,43 +237,43 @@ export default function SecureBookViewer() {
 
   const pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}`;
 
-  // Función para generar el viewer URL de Google con parámetros adicionales
+  // Función para generar el viewer URL de Google
   const getGoogleViewerUrl = (pdfUrl: string) => {
-    return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true&chrome=false&disablePopups=true`;
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true&chrome=false`;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="bg-white shadow">
-        <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-primary mr-3" />
+              <BookOpen className="h-8 w-8 text-primary mr-3 flex-shrink-0" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-gray-900 break-words">
                   {libroData.titulo}
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 break-words">
                   Acceso exclusivo para {libroData.email}
                 </p>
               </div>
             </div>
             <div className="flex items-center text-sm text-gray-500">
-              <Lock className="h-4 w-4 mr-1" />
+              <Lock className="h-4 w-4 mr-1 flex-shrink-0" />
               Visualización Segura
             </div>
           </div>
         </div>
       </div>
 
-      <div className="w-full h-[calc(100vh-110px)]">
+      <div className="w-full h-[calc(100vh-110px)] px-4 sm:px-6 lg:px-8 py-4">
         <div 
-          className="relative w-full h-full select-none" 
+          className="relative w-full h-full rounded-lg overflow-hidden shadow-lg" 
           onContextMenu={(e) => e.preventDefault()}
         >
           {pdfError ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
+            <div className="flex items-center justify-center h-full bg-white">
+              <div className="text-center p-4">
                 <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
                 <p className="text-red-600">{pdfError}</p>
                 <p className="text-sm text-gray-500 mt-2">
@@ -283,25 +283,14 @@ export default function SecureBookViewer() {
             </div>
           ) : (
             <div className="relative w-full h-full">
-              <div 
-                className="absolute inset-0 z-10"
-                onContextMenu={(e) => e.preventDefault()}
-                onClick={(e) => e.preventDefault()}
-                style={{ pointerEvents: 'none' }}
-              />
               <iframe
                 src={getGoogleViewerUrl(pdfUrl)}
                 className="w-full h-full"
                 style={{
                   border: 'none',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  MozUserSelect: 'none',
-                  msUserSelect: 'none',
                 }}
                 title={libroData.titulo}
                 onError={handlePdfError}
-                sandbox="allow-scripts allow-same-origin allow-popups"
               />
             </div>
           )}
@@ -315,8 +304,8 @@ export default function SecureBookViewer() {
             }}
           />
           <div className="absolute bottom-0 left-0 right-0 bg-white bg-opacity-100 py-2 px-4 text-center text-sm text-gray-600">
-            <p>Este contenido está protegido y es solo para visualización</p>
-            <p className="text-xs mt-1">Acceso exclusivo para: {libroData.email}</p>
+            <p className="break-words">Este contenido está protegido y es solo para visualización</p>
+            <p className="text-xs mt-1 break-words">Acceso exclusivo para: {libroData.email}</p>
           </div>
         </div>
       </div>
@@ -328,40 +317,50 @@ export default function SecureBookViewer() {
               display: none !important;
             }
           }
-          
-          /* Prevenir selección de texto */
-          iframe {
-            pointer-events: auto !important;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-          }
 
-          /* Ocultar botón de pestaña externa */
-          iframe::-webkit-scrollbar-button {
+          /* Ocultar botón de ventana externa */
+          .ndfHFb-c4YZDc-Wrql6b {
             display: none !important;
+            position: fixed !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+          
+          /* Ocultar botón de ventana externa (selector alternativo) */
+          .ndfHFb-c4YZDc-to915-LgbsSe {
+            display: none !important;
+            position: fixed !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
           }
 
-          /* Personalizar scrollbar */
-          iframe::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+          /* Ocultar cualquier botón de acción en el visor */
+          [role="button"] {
+            display: none !important;
+            position: fixed !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
           }
 
-          iframe::-webkit-scrollbar-track {
-            background: #f1f1f1;
-          }
-
-          iframe::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-          }
-
-          iframe::-webkit-scrollbar-thumb:hover {
-            background: #555;
+          @media (max-width: 640px) {
+            .min-h-screen {
+              padding-top: 1rem;
+            }
           }
         `}
       </style>
