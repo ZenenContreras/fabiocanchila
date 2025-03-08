@@ -106,20 +106,15 @@ export default function SecureBookViewer() {
         }
       };
 
-      // Verificar que el archivo existe en el storage
-      const { data: fileExists, error: fileError } = await supabase
+      // Verificar que el archivo existe en el storage de manera más directa
+      const { data: signedUrl, error: signError } = await supabase
         .storage
         .from('secure-books')
-        .list('', {
-          limit: 1,
-          search: access.libro.archivo_url
-        });
+        .createSignedUrl(access.libro.archivo_url, 60); // URL válida por 60 segundos
 
-      console.log('Verificación de archivo:', { fileExists, fileError });
-
-      if (fileError) {
-        console.error('Error verificando archivo:', fileError);
-        throw new Error('Error al verificar disponibilidad del archivo');
+      if (signError) {
+        console.error('Error obteniendo URL firmada:', signError);
+        throw new Error('El archivo no está disponible en este momento');
       }
 
       setLibroData({
@@ -242,6 +237,11 @@ export default function SecureBookViewer() {
 
   const pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}`;
 
+  // Función para generar el viewer URL de Google con parámetros adicionales
+  const getGoogleViewerUrl = (pdfUrl: string) => {
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true&chrome=false&disablePopups=true`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="bg-white shadow">
@@ -266,9 +266,9 @@ export default function SecureBookViewer() {
         </div>
       </div>
 
-      <div className="w-full h-[calc(100vh-80px)]">
+      <div className="w-full h-[calc(100vh-110px)]">
         <div 
-          className="relative w-full h-full" 
+          className="relative w-full h-full select-none" 
           onContextMenu={(e) => e.preventDefault()}
         >
           {pdfError ? (
@@ -276,24 +276,21 @@ export default function SecureBookViewer() {
               <div className="text-center">
                 <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
                 <p className="text-red-600">{pdfError}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Si el problema persiste, por favor contacta a soporte.
+                </p>
               </div>
             </div>
           ) : (
-            <object
-              data={pdfUrl}
-              type="application/pdf"
-              className="w-full h-full"
-              style={{
-                border: 'none',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                MozUserSelect: 'none',
-                msUserSelect: 'none',
-                pointerEvents: 'auto'
-              }}
-            >
+            <div className="relative w-full h-full">
+              <div 
+                className="absolute inset-0 z-10"
+                onContextMenu={(e) => e.preventDefault()}
+                onClick={(e) => e.preventDefault()}
+                style={{ pointerEvents: 'none' }}
+              />
               <iframe
-                src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&statusbar=0&messages=0&download=0`}
+                src={getGoogleViewerUrl(pdfUrl)}
                 className="w-full h-full"
                 style={{
                   border: 'none',
@@ -301,12 +298,12 @@ export default function SecureBookViewer() {
                   WebkitUserSelect: 'none',
                   MozUserSelect: 'none',
                   msUserSelect: 'none',
-                  pointerEvents: 'auto'
                 }}
                 title={libroData.titulo}
                 onError={handlePdfError}
+                sandbox="allow-scripts allow-same-origin allow-popups"
               />
-            </object>
+            </div>
           )}
           <div 
             className="absolute inset-0 pointer-events-none select-none" 
@@ -323,6 +320,51 @@ export default function SecureBookViewer() {
           </div>
         </div>
       </div>
+
+      <style>
+        {`
+          @media print {
+            * {
+              display: none !important;
+            }
+          }
+          
+          /* Prevenir selección de texto */
+          iframe {
+            pointer-events: auto !important;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+
+          /* Ocultar botón de pestaña externa */
+          iframe::-webkit-scrollbar-button {
+            display: none !important;
+          }
+
+          /* Personalizar scrollbar */
+          iframe::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+          }
+
+          iframe::-webkit-scrollbar-track {
+            background: #f1f1f1;
+          }
+
+          iframe::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+          }
+
+          iframe::-webkit-scrollbar-thumb:hover {
+            background: #555;
+          }
+        `}
+      </style>
     </div>
   );
 } 
