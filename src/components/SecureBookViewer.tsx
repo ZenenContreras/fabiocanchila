@@ -45,6 +45,7 @@ export default function SecureBookViewer() {
     try {
       setLoading(true);
       setError(null);
+      setPdfError(null);
 
       if (!token) {
         throw new Error('Token no proporcionado');
@@ -82,7 +83,6 @@ export default function SecureBookViewer() {
       }
 
       if (accessData.expires_at && new Date(accessData.expires_at) < new Date()) {
-        // Desactivar el acceso si ha expirado
         await supabase
           .from('acceso_pdf')
           .update({ is_active: false })
@@ -106,23 +106,15 @@ export default function SecureBookViewer() {
         }
       };
 
-      // Verificar que el archivo existe en el storage
-      try {
-        const { data: fileExists, error: fileError } = await supabase
-          .storage
-          .from('secure-books')
-          .list('', {
-            search: access.libro.archivo_url
-          });
+      // Verificar que el archivo existe en el storage de una manera más directa
+      const { data: fileData, error: fileError } = await supabase
+        .storage
+        .from('secure-books')
+        .download(access.libro.archivo_url);
 
-        console.log('Verificación de archivo:', { fileExists, fileError });
-
-        if (fileError || !fileExists || fileExists.length === 0) {
-          throw new Error('El archivo PDF no se encuentra disponible');
-        }
-      } catch (fileErr) {
-        console.error('Error verificando archivo:', fileErr);
-        throw new Error('Error al verificar disponibilidad del archivo');
+      if (fileError) {
+        console.error('Error verificando archivo:', fileError);
+        throw new Error('El archivo PDF no está disponible en este momento');
       }
 
       setLibroData({

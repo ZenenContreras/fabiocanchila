@@ -36,6 +36,20 @@ function AppContent() {
   const { user, signOut } = useAuth();
   useScrollToTop();
 
+  // Ruta especial para el visor de libros seguros
+  if (window.location.pathname.startsWith('/libro-seguro/')) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route 
+            path="/libro-seguro/:token" 
+            element={<SecureBookViewer />} 
+          />
+        </Routes>
+      </Suspense>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header 
@@ -71,12 +85,6 @@ function AppContent() {
                   <AccessManager />
                 </PrivateRoute>
               } 
-            />
-
-            {/* Ruta para visualizar libros de forma segura */}
-            <Route 
-              path="/libro-seguro/:token" 
-              element={<SecureBookViewer />} 
             />
           </Routes>
         </Suspense>
