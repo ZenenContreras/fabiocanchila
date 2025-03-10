@@ -221,8 +221,8 @@ export default function SecureBookViewer() {
     <div className="min-h-screen bg-gray-50 ">
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center pt-20">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-20">
+            <div className="flex items-center">
               <BookOpen className="h-8 w-8 text-primary mr-3 flex-shrink-0" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900 break-words">
