@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lock, AlertCircle, BookOpen, Mail } from 'lucide-react';
@@ -30,6 +30,7 @@ export default function SecureBookViewer() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const validateToken = async () => {
     try {
@@ -217,6 +218,135 @@ export default function SecureBookViewer() {
     return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true&chrome=false`;
   };
 
+  // Función para inyectar CSS en el iframe para ocultar el botón de ventana externa
+  const handleIframeLoad = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
+    try {
+      const iframe = e.currentTarget;
+      const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
+      
+      if (iframeDocument) {
+        // Crear un elemento de estilo
+        const style = iframeDocument.createElement('style');
+        style.textContent = `
+          /* Ocultar todos los botones y controles del visor de Google Docs */
+          .ndfHFb-c4YZDc-Wrql6b-SmKAyb,
+          .ndfHFb-c4YZDc-Wrql6b,
+          .ndfHFb-c4YZDc-to915-LgbsSe,
+          .ndfHFb-c4YZDc-GSQQnc-LgbsSe,
+          .ndfHFb-c4YZDc-MZArnb-Jh9lGc,
+          .ndfHFb-c4YZDc-cYSp0e-DARUcf-RJLb9c,
+          .ndfHFb-c4YZDc-vyDMJf-aZ2wEe,
+          .ndfHFb-c4YZDc-j7LFlb,
+          .ndfHFb-c4YZDc-Bz112c,
+          .ndfHFb-c4YZDc-Wrql6b-qPSwhe,
+          .ndfHFb-c4YZDc-n1UuX-Bz112c,
+          .ndfHFb-c4YZDc-wicPId-fmcmS-MZArnb,
+          [role="button"],
+          [role="toolbar"],
+          [role="menu"],
+          [role="menuitem"],
+          button,
+          .goog-inline-block,
+          .goog-flat-menu-button {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            position: fixed !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+        `;
+        
+        // Agregar el estilo al head del documento del iframe
+        iframeDocument.head.appendChild(style);
+      }
+    } catch (error) {
+      console.error("Error al inyectar CSS en el iframe:", error);
+    }
+  };
+
+  // Usar useEffect para manejar el intervalo de eliminación de botones
+  useEffect(() => {
+    if (!iframeRef.current || !isEmailVerified) return;
+
+    let interval: NodeJS.Timeout;
+    let observer: MutationObserver;
+    
+    try {
+      const iframeDocument = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document;
+      
+      if (iframeDocument) {
+        // Función para ocultar el botón de ventana externa
+        const hideExternalWindowButton = () => {
+          try {
+            // Buscar todos los elementos que podrían ser el botón de ventana externa
+            const buttons = iframeDocument.querySelectorAll('button, [role="button"], .goog-inline-block, .goog-flat-menu-button');
+            buttons.forEach(button => {
+              // Corregir el tipo para evitar errores del linter
+              const htmlElement = button as HTMLElement;
+              
+              // Verificar si el texto del botón contiene "Ventana externa"
+              const buttonText = htmlElement.textContent || htmlElement.innerText || '';
+              if (buttonText.includes('Ventana externa') || 
+                  htmlElement.title?.includes('Ventana externa') || 
+                  htmlElement.getAttribute('aria-label')?.includes('Ventana externa')) {
+                htmlElement.style.display = 'none';
+                htmlElement.style.visibility = 'hidden';
+                htmlElement.style.opacity = '0';
+                htmlElement.style.pointerEvents = 'none';
+                htmlElement.style.position = 'fixed';
+                htmlElement.style.top = '-9999px';
+                htmlElement.style.left = '-9999px';
+                htmlElement.style.width = '0';
+                htmlElement.style.height = '0';
+              }
+            });
+            
+            // También ocultar elementos específicos por clase
+            const specificButtons = iframeDocument.querySelectorAll('.ndfHFb-c4YZDc-Wrql6b, .ndfHFb-c4YZDc-to915-LgbsSe');
+            specificButtons.forEach(button => {
+              const htmlElement = button as HTMLElement;
+              htmlElement.style.display = 'none';
+              htmlElement.style.visibility = 'hidden';
+              htmlElement.style.opacity = '0';
+              htmlElement.style.pointerEvents = 'none';
+            });
+          } catch (error) {
+            console.error("Error al eliminar botones:", error);
+          }
+        };
+        
+        // Ejecutar inmediatamente
+        hideExternalWindowButton();
+        
+        // Configurar un intervalo para eliminar periódicamente el botón de ventana externa
+        interval = setInterval(hideExternalWindowButton, 1000);
+        
+        // Configurar un observador de mutaciones para detectar cuando se añaden nuevos elementos al DOM
+        observer = new MutationObserver((mutations) => {
+          hideExternalWindowButton();
+        });
+        
+        // Observar cambios en el DOM
+        observer.observe(iframeDocument.body, {
+          childList: true,
+          subtree: true
+        });
+      }
+    } catch (error) {
+      console.error("Error al configurar el intervalo:", error);
+    }
+    
+    // Limpiar el intervalo y el observador cuando el componente se desmonte
+    return () => {
+      if (interval) clearInterval(interval);
+      if (observer) observer.disconnect();
+    };
+  }, [isEmailVerified]);
+
   return (
     <div className="min-h-screen bg-gray-50 ">
       <div className="bg-white shadow">
@@ -259,6 +389,7 @@ export default function SecureBookViewer() {
           ) : (
             <div className="relative w-full h-full">
               <iframe
+                ref={iframeRef}
                 src={getGoogleViewerUrl(pdfUrl)}
                 className="w-full h-full"
                 style={{
@@ -266,6 +397,7 @@ export default function SecureBookViewer() {
                 }}
                 title={libroData.titulo}
                 onError={handlePdfError}
+                onLoad={handleIframeLoad}
               />
             </div>
           )}
@@ -292,73 +424,56 @@ export default function SecureBookViewer() {
               display: none !important;
             }
           }
-          .ndfHFb-c4YZDc-Wrql6b-SmKAyb {
+          
+          /* Ocultar todos los botones y controles del visor de Google Docs */
+          .ndfHFb-c4YZDc-Wrql6b-SmKAyb,
+          .ndfHFb-c4YZDc-Wrql6b,
+          .ndfHFb-c4YZDc-to915-LgbsSe,
+          .ndfHFb-c4YZDc-GSQQnc-LgbsSe,
+          .ndfHFb-c4YZDc-MZArnb-Jh9lGc,
+          .ndfHFb-c4YZDc-cYSp0e-DARUcf-RJLb9c,
+          .ndfHFb-c4YZDc-vyDMJf-aZ2wEe,
+          .ndfHFb-c4YZDc-j7LFlb,
+          .ndfHFb-c4YZDc-Bz112c,
+          .ndfHFb-c4YZDc-Wrql6b-qPSwhe,
+          .ndfHFb-c4YZDc-n1UuX-Bz112c,
+          .ndfHFb-c4YZDc-wicPId-fmcmS-MZArnb,
+          [role="button"],
+          [role="toolbar"],
+          [role="menu"],
+          [role="menuitem"] {
             display: none !important;
-          }
-          /* Ocultar botón de ventana externa */
-          .ndfHFb-c4YZDc-Wrql6b {
-            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
             position: fixed !important;
             top: -9999px !important;
             left: -9999px !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
             width: 0 !important;
             height: 0 !important;
           }
           
-          /* Ocultar botón de ventana externa (selector alternativo) */
-          .ndfHFb-c4YZDc-to915-LgbsSe {
-            display: none !important;
-            position: fixed !important;
-            top: -9999px !important;
-            left: -9999px !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            width: 0 !important;
-            height: 0 !important;
-          }
-
-          /* Ocultar cualquier botón de acción en el visor */
-          [role="button"] {
-            display: none !important;
-            position: fixed !important;
-            top: -9999px !important;
-            left: -9999px !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            width: 0 !important;
-            height: 0 !important;
-          }
-
-          /* Ocultar específicamente el botón de ventana externa de Google Docs Viewer */
-          .ndfHFb-c4YZDc-Wrql6b, 
-          .ndfHFb-c4YZDc-to915-LgbsSe,
-          .ndfHFb-c4YZDc-Wrql6b-SmKAyb,
-          .ndfHFb-c4YZDc-GSQQnc-LgbsSe {
-            display: none !important;
-            position: fixed !important;
-            top: -9999px !important;
-            left: -9999px !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            width: 0 !important;
-            height: 0 !important;
-          }
-
-          /* Permitir interacción con el PDF pero ocultar controles específicos */
+          /* Asegurar que el iframe permita interacción con el documento */
           iframe {
             pointer-events: auto !important;
           }
           
-          /* Ocultar cualquier elemento con texto "Ventana externa" */
-          *:contains("Ventana externa") {
+          /* Ocultar el botón de ventana externa específicamente */
+          .ventana-externa,
+          button[title="Ventana externa"],
+          a[title="Ventana externa"],
+          div[title="Ventana externa"],
+          span[title="Ventana externa"],
+          *[aria-label="Ventana externa"] {
             display: none !important;
             visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            position: fixed !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            width: 0 !important;
+            height: 0 !important;
           }
 
           @media (max-width: 640px) {
