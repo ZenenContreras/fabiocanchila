@@ -334,6 +334,33 @@ export default function SecureBookViewer() {
             height: 0 !important;
           }
 
+          /* Ocultar específicamente el botón de ventana externa de Google Docs Viewer */
+          .ndfHFb-c4YZDc-Wrql6b, 
+          .ndfHFb-c4YZDc-to915-LgbsSe,
+          .ndfHFb-c4YZDc-Wrql6b-SmKAyb,
+          .ndfHFb-c4YZDc-GSQQnc-LgbsSe {
+            display: none !important;
+            position: fixed !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+
+          /* Permitir interacción con el PDF pero ocultar controles específicos */
+          iframe {
+            pointer-events: auto !important;
+          }
+          
+          /* Ocultar cualquier elemento con texto "Ventana externa" */
+          *:contains("Ventana externa") {
+            display: none !important;
+            visibility: hidden !important;
+          }
+
           @media (max-width: 640px) {
             .min-h-screen {
               padding-top: 0rem;
