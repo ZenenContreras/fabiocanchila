@@ -9,26 +9,16 @@ interface LibroData {
   email: string;
 }
 
-interface SupabaseLibro {
+interface AccesoData {
+  email: string;
+  is_active: boolean;
+  expires_at: string | null;
+  libro_id: string;
+}
+
+interface LibroPdfData {
   titulo: string;
   archivo_url: string;
-}
-
-interface SupabaseAccess {
-  email: string;
-  libro: SupabaseLibro;
-  expires_at: string | null;
-  is_active: boolean;
-}
-
-interface SupabaseResponse {
-  email: string;
-  expires_at: string | null;
-  is_active: boolean;
-  libro: {
-    titulo: string;
-    archivo_url: string;
-  };
 }
 
 export default function SecureBookViewer() {
@@ -36,10 +26,10 @@ export default function SecureBookViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [libroData, setLibroData] = useState<LibroData | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   const validateToken = async () => {
     try {
@@ -51,29 +41,23 @@ export default function SecureBookViewer() {
         throw new Error('Token no proporcionado');
       }
 
-      console.log('Validando token:', token);
-
+      // Usamos el cliente anónimo para la consulta
       const { data: accessData, error: accessError } = await supabase
         .from('acceso_pdf')
-        .select(`
-          email,
-          is_active,
-          expires_at,
-          libro:libro_pdf!acceso_pdf_libro_id_fkey (
-            titulo,
-            archivo_url
-          )
-        `)
+        .select('email, is_active, expires_at, libro_id')
         .eq('token', token)
         .single();
 
-      console.log('Respuesta de Supabase:', { accessData, accessError });
+      console.log('Datos de acceso:', accessData);
 
       if (accessError) {
-        console.error('Error validando token:', accessError);
-        throw new Error('Token de acceso inválido');
+        console.error('Error en la consulta de acceso:', accessError);
+        if (accessError.code === 'PGRST301') {
+          throw new Error('Token de acceso inválido');
+        }
+        throw new Error('Error al validar el acceso');
       }
-      
+
       if (!accessData) {
         throw new Error('Acceso no encontrado');
       }
@@ -91,40 +75,32 @@ export default function SecureBookViewer() {
         throw new Error('Este acceso ha expirado');
       }
 
-      if (!accessData.libro) {
-        throw new Error('El libro asociado no está disponible');
-      }
+      // Usamos el cliente anónimo para obtener el libro
+      const { data: libroData, error: libroError } = await supabase
+        .from('libro_pdf')
+        .select('titulo, archivo_url')
+        .eq('id', accessData.libro_id)
+        .single();
 
-      const response = accessData as unknown as SupabaseResponse;
-      const access: SupabaseAccess = {
-        email: response.email,
-        expires_at: response.expires_at,
-        is_active: response.is_active,
-        libro: {
-          titulo: response.libro.titulo,
-          archivo_url: response.libro.archivo_url
+      console.log('Datos del libro:', libroData);
+
+      if (libroError) {
+        console.error('Error al obtener libro:', libroError);
+        if (libroError.code === 'PGRST301') {
+          throw new Error('El libro no está disponible');
         }
-      };
-
-      // Verificar que el archivo existe en el storage
-      const { data: fileExists } = await supabase
-        .storage
-        .from('secure-books')
-        .list(access.libro.archivo_url.split('/')[0], {
-          limit: 1,
-          offset: 0,
-          search: access.libro.archivo_url.split('/')[1]
-        });
-
-      if (!fileExists || fileExists.length === 0) {
-        console.error('Archivo no encontrado en storage');
-        throw new Error('El archivo no está disponible en este momento');
+        throw new Error('Error al obtener el libro');
       }
 
+      if (!libroData) {
+        throw new Error('Libro no encontrado');
+      }
+
+      // Si llegamos aquí, tenemos todos los datos necesarios
       setLibroData({
-        titulo: access.libro.titulo,
-        archivo_url: access.libro.archivo_url,
-        email: access.email
+        titulo: libroData.titulo,
+        archivo_url: libroData.archivo_url,
+        email: accessData.email
       });
 
     } catch (err: any) {
@@ -139,14 +115,14 @@ export default function SecureBookViewer() {
     validateToken();
   }, [token]);
 
-  const handleAuthentication = async (e: React.FormEvent) => {
+  const handleEmailVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
 
     if (!libroData) return;
 
     if (email.toLowerCase() === libroData.email.toLowerCase()) {
-      setIsAuthenticated(true);
+      setIsEmailVerified(true);
     } else {
       setAuthError('El correo electrónico no coincide con el acceso autorizado');
     }
@@ -154,10 +130,6 @@ export default function SecureBookViewer() {
 
   const handlePdfError = () => {
     setPdfError('Error al cargar el PDF. Por favor, intente de nuevo más tarde.');
-    console.error('Error al cargar el PDF:', {
-      url: libroData?.archivo_url,
-      supabaseUrl: import.meta.env.VITE_SUPABASE_URL
-    });
   };
 
   if (loading) {
@@ -188,7 +160,7 @@ export default function SecureBookViewer() {
 
   if (!libroData) return null;
 
-  if (!isAuthenticated) {
+  if (!isEmailVerified) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
@@ -202,7 +174,7 @@ export default function SecureBookViewer() {
             </p>
           </div>
 
-          <form onSubmit={handleAuthentication} className="space-y-6">
+          <form onSubmit={handleEmailVerification} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Correo Electrónico
@@ -241,7 +213,6 @@ export default function SecureBookViewer() {
 
   const pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}`;
 
-  // Función para generar el viewer URL de Google
   const getGoogleViewerUrl = (pdfUrl: string) => {
     return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true&chrome=false`;
   };

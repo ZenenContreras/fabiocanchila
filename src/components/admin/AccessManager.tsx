@@ -239,10 +239,20 @@ export default function AccessManager() {
         throw new Error('Por favor completa todos los campos');
       }
 
-      const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      const farFutureDate = new Date();
-      farFutureDate.setFullYear(farFutureDate.getFullYear() + 100);
+      // Primero verificamos que el libro existe
+      const { data: libroExiste, error: libroError } = await supabase
+        .from('libro_pdf')
+        .select('id')
+        .eq('id', newAccess.libroId)
+        .single();
 
+      if (libroError || !libroExiste) {
+        throw new Error('El libro seleccionado no está disponible');
+      }
+
+      const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+      // Creamos el nuevo acceso
       const { data: newAccessData, error } = await supabase
         .from('acceso_pdf')
         .insert({
@@ -251,7 +261,7 @@ export default function AccessManager() {
           token: token,
           is_active: true,
           created_at: new Date().toISOString(),
-          expires_at: farFutureDate.toISOString()
+          expires_at: null // Sin fecha de expiración
         })
         .select(`
           id,
@@ -259,7 +269,7 @@ export default function AccessManager() {
           token,
           created_at,
           is_active,
-          libro:libro_pdf!acceso_pdf_libro_id_fkey (
+          libro:libro_pdf (
             id,
             titulo,
             archivo_url,
@@ -268,28 +278,33 @@ export default function AccessManager() {
         `)
         .single();
 
-      if (error) throw error;
-
-      if (newAccessData) {
-        const data = newAccessData as unknown as SupabaseResponse;
-        const formattedAccess: Access = {
-          id: data.id,
-          email: data.email,
-          token: data.token,
-          created_at: data.created_at,
-          is_active: data.is_active,
-          libro: {
-            id: data.libro.id,
-            titulo: data.libro.titulo,
-            archivo_url: data.libro.archivo_url,
-            created_at: data.libro.created_at
-          }
-        };
-
-        setAccesses(prev => [formattedAccess, ...prev]);
-        setNewAccess({ email: '', libroId: '', expiresAt: '' });
-        setShowAccessForm(false);
+      if (error) {
+        console.error('Error al crear acceso:', error);
+        throw error;
       }
+
+      if (!newAccessData || !newAccessData.libro) {
+        throw new Error('Error al crear el acceso');
+      }
+
+      const formattedAccess = {
+        id: newAccessData.id,
+        email: newAccessData.email,
+        token: newAccessData.token,
+        created_at: newAccessData.created_at,
+        is_active: newAccessData.is_active,
+        libro: {
+          id: newAccessData.libro.id,
+          titulo: newAccessData.libro.titulo,
+          archivo_url: newAccessData.libro.archivo_url,
+          created_at: newAccessData.libro.created_at
+        }
+      };
+
+      setAccesses(prev => [formattedAccess, ...prev]);
+      setNewAccess({ email: '', libroId: '', expiresAt: '' });
+      setShowAccessForm(false);
+
     } catch (err: any) {
       console.error('Error creando acceso:', err);
       setError(err.message);
