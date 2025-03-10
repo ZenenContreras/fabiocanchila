@@ -106,14 +106,18 @@ export default function SecureBookViewer() {
         }
       };
 
-      // Verificar que el archivo existe en el storage de manera más directa
-      const { data: signedUrl, error: signError } = await supabase
+      // Verificar que el archivo existe en el storage
+      const { data: fileExists } = await supabase
         .storage
         .from('secure-books')
-        .createSignedUrl(access.libro.archivo_url, 60); // URL válida por 60 segundos
+        .list(access.libro.archivo_url.split('/')[0], {
+          limit: 1,
+          offset: 0,
+          search: access.libro.archivo_url.split('/')[1]
+        });
 
-      if (signError) {
-        console.error('Error obteniendo URL firmada:', signError);
+      if (!fileExists || fileExists.length === 0) {
+        console.error('Archivo no encontrado en storage');
         throw new Error('El archivo no está disponible en este momento');
       }
 
