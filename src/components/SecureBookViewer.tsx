@@ -9,18 +9,6 @@ interface LibroData {
   email: string;
 }
 
-interface AccesoData {
-  email: string;
-  is_active: boolean;
-  expires_at: string | null;
-  libro_id: string;
-}
-
-interface LibroPdfData {
-  titulo: string;
-  archivo_url: string;
-}
-
 export default function SecureBookViewer() {
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
@@ -212,11 +200,7 @@ export default function SecureBookViewer() {
   }
 
   const pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/secure-books/${libroData.archivo_url}`;
-
-  const getGoogleViewerUrl = (pdfUrl: string) => {
-    return `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true&chrome=false`;
-  };
-
+  
   return (
     <div className="min-h-screen bg-gray-50 ">
       <div className="bg-white shadow">
@@ -257,16 +241,19 @@ export default function SecureBookViewer() {
               </div>
             </div>
           ) : (
-            <div className="relative w-full h-full">
-              <iframe
-                src={getGoogleViewerUrl(pdfUrl)}
-                className="w-full h-full"
+            <div className="flex items-center justify-center w-full h-full">
+              <object
+                data={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                type="application/pdf"
+                className="w-3/4 h-full"
                 style={{
                   border: 'none',
                 }}
                 title={libroData.titulo}
                 onError={handlePdfError}
-              />
+              >
+                <p>Tu navegador no puede mostrar este PDF</p>
+              </object>
             </div>
           )}
           <div 
@@ -284,63 +271,6 @@ export default function SecureBookViewer() {
           </div>
         </div>
       </div>
-
-      <style>
-        {`
-          @media print {
-            * {
-              display: none !important;
-            }
-          }
-          .ndfHFb-c4YZDc-Wrql6b-SmKAyb {
-            display: none !important;
-          }
-          /* Ocultar botón de ventana externa */
-          .ndfHFb-c4YZDc-Wrql6b {
-            display: none !important;
-            position: fixed !important;
-            top: -9999px !important;
-            left: -9999px !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            width: 0 !important;
-            height: 0 !important;
-          }
-          
-          /* Ocultar botón de ventana externa (selector alternativo) */
-          .ndfHFb-c4YZDc-to915-LgbsSe {
-            display: none !important;
-            position: fixed !important;
-            top: -9999px !important;
-            left: -9999px !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            width: 0 !important;
-            height: 0 !important;
-          }
-
-          /* Ocultar cualquier botón de acción en el visor */
-          [role="button"] {
-            display: none !important;
-            position: fixed !important;
-            top: -9999px !important;
-            left: -9999px !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            width: 0 !important;
-            height: 0 !important;
-          }
-
-          @media (max-width: 640px) {
-            .min-h-screen {
-              padding-top: 0rem;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 } 
