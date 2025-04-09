@@ -5,6 +5,7 @@ import BlogManager from './BlogManager';
 import ProductManager from './ProductManager';
 import ServiceManager from './ServiceManager';
 import AccessManager from './AccessManager';
+import UserManager from './UserManager';
 
 export default function AdminDashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,6 +14,7 @@ export default function AdminDashboard() {
     { value: 'services', label: 'Servicios' },
     { value: 'products', label: 'Publicaciones' },
     { value: 'blog', label: 'Blog' },
+    { value: 'users', label: 'Usuarios' },
     { value: 'access', label: 'Gestión de Accesos' }
   ];
 
@@ -62,6 +64,10 @@ export default function AdminDashboard() {
 
           <Tabs.Content value="services">
             <ServiceManager />
+          </Tabs.Content>
+
+          <Tabs.Content value="users">
+            <UserManager />
           </Tabs.Content>
 
           <Tabs.Content value="access">
