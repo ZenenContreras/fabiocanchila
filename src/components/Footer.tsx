@@ -51,7 +51,7 @@ Trabajo con personas, empresas, instituciones y organizaciones para aumentar sus
                 <Instagram size={24} />
               </a>
               <Link 
-                to="/products" 
+                to="/publicaciones" 
                 className="text-custom-white/60 hover:text-accent transition-colors transform hover:scale-110"
               >
                 <BookOpen size={24} />
