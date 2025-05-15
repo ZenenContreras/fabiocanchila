@@ -68,7 +68,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: registerData.email,
           password: registerData.password,
           options: {
@@ -83,9 +83,26 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           }
         });
         if (error) throw error;
-        showNotification('success', 'Cuenta creada correctamente. Revise su correo para confirmar.');
+
+        if (data) {
+          // Actualizar también la tabla profiles
+          await supabase.from('profiles').upsert({
+            id: data.user?.id,
+            email: registerData.email,
+            first_name: registerData.firstName,
+            last_name: registerData.lastName,
+            country: registerData.country,
+            state: registerData.state,
+            city: registerData.city,
+            phone: registerData.phone,
+            created_at: new Date().toISOString(),
+            is_active: true
+          });
+          
+          showNotification('success', 'Cuenta creada correctamente. Revise su correo para confirmar.');
+        }
+        onClose();
       }
-      onClose();
     } catch (err: any) {
       setError(err.message);
     } finally {
