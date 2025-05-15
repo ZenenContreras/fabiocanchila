@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Mail, ArrowRight, Quote, MousePointerClick } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/auth/AuthModal';
@@ -265,39 +265,37 @@ export default function Hero() {
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <AnimatePresence mode="wait">
-              {testimonials.map((testimonial, index) => (
-                <motion.div
-                  key={`${currentTestimonialIndex}-${index}`}
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.5 }}
-                  className={`bg-white rounded-xl shadow-lg p-8 relative transform hover:-translate-y-1 transition-transform duration-300 ${
-                    index === currentTestimonialIndex || 
-                    index === (currentTestimonialIndex + 1) % testimonials.length || 
-                    index === (currentTestimonialIndex + 2) % testimonials.length 
-                      ? 'block' 
-                      : 'hidden'
-                  }`}
-                >
-                  <Quote className="absolute text-primary/10 h-16 w-16 -top-2 -left-2 transform -rotate-12" />
-                  <div className="relative z-10">
-                    <p className="text-gray-700 italic mb-6 leading-relaxed">
-                      "{testimonial.quote}"
+            {testimonials.map((testimonial, index) => (
+              <motion.div
+                key={`${currentTestimonialIndex}-${index}`}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.5 }}
+                className={`bg-white rounded-xl shadow-lg p-8 relative transform hover:-translate-y-1 transition-transform duration-300 ${
+                  index === currentTestimonialIndex || 
+                  index === (currentTestimonialIndex + 1) % testimonials.length || 
+                  index === (currentTestimonialIndex + 2) % testimonials.length 
+                    ? 'block' 
+                    : 'hidden'
+                }`}
+              >
+                <Quote className="absolute text-primary/10 h-16 w-16 -top-2 -left-2 transform -rotate-12" />
+                <div className="relative z-10">
+                  <p className="text-gray-700 italic mb-6 leading-relaxed">
+                    "{testimonial.quote}"
+                  </p>
+                  <div className="border-t pt-4 border-gray-100">
+                    <h3 className="font-semibold text-primary">
+                      {testimonial.name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {testimonial.role}
                     </p>
-                    <div className="border-t pt-4 border-gray-100">
-                      <h3 className="font-semibold text-primary">
-                        {testimonial.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {testimonial.role}
-                      </p>
-                    </div>
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                </div>
+              </motion.div>
+            ))}
           </div>
 
           {/* Testimonial navigation dots */}

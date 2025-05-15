@@ -2,7 +2,7 @@ import  { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, MessageCircle  } from 'lucide-react';
-import { supabase, withRetry } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import type { Service } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import AuthModal from '../components/auth/AuthModal';

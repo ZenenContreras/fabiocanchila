@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { X, Mail, Lock, User, MapPin, Phone, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [resetPasswordMode, setResetPasswordMode] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
+  const { showNotification } = useNotification();
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
@@ -80,6 +83,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           }
         });
         if (error) throw error;
+        showNotification('success', 'Cuenta creada correctamente. Revise su correo para confirmar.');
       }
       onClose();
     } catch (err: any) {
@@ -113,9 +117,30 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setShowPassword(!showPassword);
   };
 
+  // Cerrar modal con ESC
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose}></div>
+      
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+        className="relative min-h-screen flex items-center justify-center p-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0 }}
@@ -402,7 +427,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             )}
           </motion.div>
         </div>
-      )}
-    </AnimatePresence>
+      </motion.div>
+    </div>
   );
 }

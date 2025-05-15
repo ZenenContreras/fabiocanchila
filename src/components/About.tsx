@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { BookOpen, Youtube, Target, Users, Briefcase, LineChart, Building2, HandshakeIcon, Brain, Rocket, Trophy, Star, Heart } from 'lucide-react';
 
 export default function About() {
@@ -205,33 +205,31 @@ export default function About() {
             ))}
           </div>
 
-          <AnimatePresence mode="wait">
-            {selectedSection && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {professionalSections[selectedSection as keyof typeof professionalSections].items.map((item, index) => {
-                  const Icon = item.icon;
-                  return (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                    >
-                      <Icon className="h-8 w-8 text-primary mb-4" />
-                      <p className="text-gray-700 font-medium">{item.text}</p>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {selectedSection && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {professionalSections[selectedSection as keyof typeof professionalSections].items.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                  >
+                    <Icon className="h-8 w-8 text-primary mb-4" />
+                    <p className="text-gray-700 font-medium">{item.text}</p>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
 
           {!selectedSection && (
             <motion.p
