@@ -67,7 +67,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           password: loginPassword,
         });
         if (error) throw error;
+        
+        showNotification('success', 'Inicio de sesión exitoso');
+        onClose();
       } else {
+        // 1. Registrar el usuario en el sistema de autenticación de Supabase
         const { data, error } = await supabase.auth.signUp({
           email: registerData.email,
           password: registerData.password,
@@ -82,12 +86,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             }
           }
         });
+        
         if (error) throw error;
 
-        if (data) {
-          // Actualizar también la tabla profiles
-          await supabase.from('profiles').upsert({
-            id: data.user?.id,
+        if (data && data.user) {
+          // 2. Crear un perfil en la tabla profiles
+          const { error: profileError } = await supabase.from('profiles').upsert({
+            id: data.user.id,
             email: registerData.email,
             first_name: registerData.firstName,
             last_name: registerData.lastName,
@@ -97,11 +102,16 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             phone: registerData.phone,
             created_at: new Date().toISOString(),
             is_active: true
-          });
+          }, { onConflict: 'id' });
           
-          showNotification('success', 'Cuenta creada correctamente. Revise su correo para confirmar.');
+          if (profileError) {
+            console.error('Error al crear perfil:', profileError);
+            // No lanzamos error aquí para no interrumpir el flujo de registro
+          }
+          
+          showNotification('success', 'Cuenta creada correctamente.');
+          onClose();
         }
-        onClose();
       }
     } catch (err: any) {
       setError(err.message);
@@ -123,6 +133,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       
       if (error) throw error;
       setResetSuccess(true);
+      showNotification('success', 'Se ha enviado un correo para restablecer su contraseña');
     } catch (err: any) {
       setError(err.message);
     } finally {
