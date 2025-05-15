@@ -50,7 +50,8 @@ export default function ServicesPage({ showHeading = true, maxServices }: Servic
         query = query.limit(maxServices);
       }
 
-      const { data, error } = await withRetry(() => query);
+      const result = await withRetry(() => query);
+      const { data, error } = result as { data: Service[] | null, error: any };
 
       if (error) throw error;
       setServices(data || []);
@@ -140,7 +141,7 @@ export default function ServicesPage({ showHeading = true, maxServices }: Servic
                   </p>
 
                   <Link
-                    to={`/services/${service.id}`}
+                    to={`/servicios/${service.id}`}
                     className="inline-flex items-center text-primary hover:text-primary-dark transition-colors group"
                   >
                     <span className="font-medium">Leer más</span>
@@ -155,7 +156,7 @@ export default function ServicesPage({ showHeading = true, maxServices }: Servic
         {!showHeading && services.length > 0 && (
           <div className="text-center mt-12">
             <motion.a
-              href="/services"
+              href="/servicios"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Plus, Trash2, ExternalLink, Search, Upload, AlertCircle, Book, Eye, EyeOff, Edit2, Clock, Mail, Check, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { motion } from 'framer-motion';
+
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 

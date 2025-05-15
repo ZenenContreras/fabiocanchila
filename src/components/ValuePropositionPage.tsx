@@ -27,7 +27,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'transforma-suenos',
     title: 'Transforma tus Sueños en Realidad',
     description: 'Ayudo a personas y organizaciones a alcanzar su máximo potencial a través del "Canvas del Éxito y la Prosperidad".',
-    youtubeUrl: 'https://www.youtube.com/watch?v=your-video-id',
+    youtubeUrl: 'https://youtu.be/fVTZ9gCHU1E',
     resources: [
       {
         type: 'book',
@@ -61,7 +61,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'emprendimiento-gestion',
     title: 'Emprendimiento y Gestión para el Desarrollo',
     description: 'Asesoro la planificación, ejecución, seguimiento, monitoreo, evaluación y gestión de aprendizajes de actividades para la transformación de realidades territoriales',
-    youtubeUrl: 'https://www.youtube.com/watch?v=za72pzdY8FY&t=350s',
+    youtubeUrl: 'https://youtu.be/40meLHQlhMc',
     resources: [
       {
         type: 'contact',
@@ -74,7 +74,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'aumenta-capacidad',
     title: 'Aumenta tu capacidad para crear, aportar y capturar valor',
     description: 'Aplico metodologías para emprender y hacer brillar tu marca personal',
-    youtubeUrl: 'https://www.youtube.com/watch?v=your-video-id',
+    youtubeUrl: 'https://youtu.be/r9MgSg07zuY',
     resources: [
       {
         type: 'book',
@@ -113,7 +113,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'consolida-equipos',
     title: 'Consolida Equipos que Garanticen Resultados',
     description: 'Facilito la elaboración de planes y estrategias para aumentar el desempeño individual y colectivo hacia el logro de resultados',
-    youtubeUrl: 'https://www.youtube.com/watch?v=your-video-id',
+    youtubeUrl: 'https://youtu.be/lRGDI14I6pQ',
     resources: [
       {
         type: 'book',
@@ -153,7 +153,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'estandar-profesional',
     title: 'Lleva tu estándar profesional al siguiente nivel',
     description: 'Guío la elaboración de rutas de aprendizaje para aumentar capacidades y avanzar hacia nuevos desafíos profesionales',
-    youtubeUrl: 'https://www.youtube.com/watch?v=your-video-id',
+    youtubeUrl: 'https://youtu.be/jLwpQ2RBXco',
     resources: [
       {
         type: 'book',
@@ -201,7 +201,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'alianzas-gobernanzas',
     title: 'Gestiona Alianzas y Gobernanzas',
     description: 'Asesoro el diseño y gestión de alianzas y gobernanzas para el desarrollo',
-    youtubeUrl: 'https://www.youtube.com/watch?v=your-video-id',
+    youtubeUrl: 'https://youtu.be/2Q0QipyrAK8',
     resources: [
       {
         type: 'book',
@@ -225,7 +225,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'sostenibilidad-esal',
     title: 'Sostenibilidad de Organizaciones sin Ánimo de Lucro',
     description: 'Facilito la construcción de estrategias sólidas de sostenibilidad de organizaciones sin ánimo de lucro que trabajan por el desarrollo',
-    youtubeUrl: 'https://www.youtube.com/watch?v=your-video-id',
+    youtubeUrl: 'https://youtu.be/dGbqrq9fq74',
     resources: [
       {
         type: 'program',
