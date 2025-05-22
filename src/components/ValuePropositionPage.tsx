@@ -27,7 +27,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'transforma-suenos',
     title: 'Transforma tus Sueños en Realidad',
     description: 'Ayudo a personas y organizaciones a alcanzar su máximo potencial a través del "Canvas del Éxito y la Prosperidad".',
-    youtubeUrl: 'https://youtu.be/fVTZ9gCHU1E',
+    youtubeUrl: 'https://youtu.be/VmK8RnGtcG4?si=crCXCcdE0ecMlyNh',
     resources: [
       {
         type: 'book',
@@ -61,7 +61,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'emprendimiento-gestion',
     title: 'Emprendimiento y Gestión para el Desarrollo',
     description: 'Asesoro la planificación, ejecución, seguimiento, monitoreo, evaluación y gestión de aprendizajes de actividades para la transformación de realidades territoriales',
-    youtubeUrl: 'https://youtu.be/40meLHQlhMc',
+    youtubeUrl: 'https://youtu.be/DGzi_-nHT-w?si=kBy60YrlR2ipjBRY',
     resources: [
       {
         type: 'contact',
@@ -74,7 +74,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'aumenta-capacidad',
     title: 'Aumenta tu capacidad para crear, aportar y capturar valor',
     description: 'Aplico metodologías para emprender y hacer brillar tu marca personal',
-    youtubeUrl: 'https://youtu.be/r9MgSg07zuY',
+    youtubeUrl: 'https://youtu.be/pKdIK_8HoO8?si=iDnmQVq3_ssjOSo8',
     resources: [
       {
         type: 'book',
@@ -113,7 +113,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'consolida-equipos',
     title: 'Consolida Equipos que Garanticen Resultados',
     description: 'Facilito la elaboración de planes y estrategias para aumentar el desempeño individual y colectivo hacia el logro de resultados',
-    youtubeUrl: 'https://youtu.be/lRGDI14I6pQ',
+    youtubeUrl: 'https://youtu.be/wJ9pX5M-Ugo?si=2iOOsfiYCcRWnkuU',
     resources: [
       {
         type: 'book',
@@ -153,7 +153,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'estandar-profesional',
     title: 'Lleva tu estándar profesional al siguiente nivel',
     description: 'Guío la elaboración de rutas de aprendizaje para aumentar capacidades y avanzar hacia nuevos desafíos profesionales',
-    youtubeUrl: 'https://youtu.be/jLwpQ2RBXco',
+    youtubeUrl: 'https://youtu.be/iFzUNSmlGOI?si=zNPZU2jx37LhV8KD',
     resources: [
       {
         type: 'book',
@@ -201,7 +201,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'alianzas-gobernanzas',
     title: 'Gestiona Alianzas y Gobernanzas',
     description: 'Asesoro el diseño y gestión de alianzas y gobernanzas para el desarrollo',
-    youtubeUrl: 'https://youtu.be/2Q0QipyrAK8',
+    youtubeUrl: 'https://youtu.be/mnjLI7XD4sw?si=_m6cP-8hHvReLShx',
     resources: [
       {
         type: 'book',
@@ -225,7 +225,7 @@ const VALUE_PROPOSITIONS: Record<string, ValueProposition> = {
     id: 'sostenibilidad-esal',
     title: 'Sostenibilidad de Organizaciones sin Ánimo de Lucro',
     description: 'Facilito la construcción de estrategias sólidas de sostenibilidad de organizaciones sin ánimo de lucro que trabajan por el desarrollo',
-    youtubeUrl: 'https://youtu.be/dGbqrq9fq74',
+    youtubeUrl: 'https://youtu.be/5iLPjm4KVt8?si=mJ_Z-E5_SAwocMke',
     resources: [
       {
         type: 'program',
@@ -260,6 +260,20 @@ export default function ValuePropositionPage() {
     navigate('/');
     return null;
   }
+
+  // Función para extraer el ID del video de YouTube de cualquier formato de URL
+  const getYoutubeVideoId = (url: string): string => {
+    // Intentar extraer el ID de varios formatos de URL de YouTube
+    const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    
+    if (match && match[2].length === 11) {
+      return match[2];
+    }
+    
+    // Si no se puede extraer, devolver la URL completa
+    return url;
+  };
 
   const handleContact = (type: 'email' | 'whatsapp', title: string) => {
     if (!user) {
@@ -381,8 +395,6 @@ export default function ValuePropositionPage() {
       </motion.div>
     );
   };
-  
-  
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -409,7 +421,7 @@ export default function ValuePropositionPage() {
           >
             <div className="mb-8 relative aspect-video">
               <iframe
-               src={`https://www.youtube.com/embed/${new URLSearchParams(new URL(proposition.youtubeUrl).search).get('v')}?autoplay=1&mute=1&loop=1&playlist=${new URLSearchParams(new URL(proposition.youtubeUrl).search).get('v')}&rel=0&related=0&modestbranding=1`}
+                src={`https://www.youtube.com/embed/${getYoutubeVideoId(proposition.youtubeUrl)}?autoplay=1&mute=1&loop=1&playlist=${getYoutubeVideoId(proposition.youtubeUrl)}&rel=0&modestbranding=1`}
                 title="YouTube video player"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
