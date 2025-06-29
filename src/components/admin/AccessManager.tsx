@@ -20,6 +20,7 @@ interface Access {
   created_at: string;
   is_active: boolean;
   libro: Libro;
+  expires_at: string;
 }
 
 interface NewAccess {
@@ -67,8 +68,9 @@ export default function AccessManager() {
   const [newAccess, setNewAccess] = useState<NewAccess>({
     email: '',
     libroId: '',
-    expiresAt: ''
+    expiresAt: '',
   });
+  const [success, setSuccess] = useState<string | null>(null);
 
   // Estado para filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,9 +100,17 @@ export default function AccessManager() {
         .from('libro_pdf')
         .select('*')
         .order('created_at', { ascending: false });
-
       if (error) throw error;
-      setLibros(data || []);
+      // Si data es un array de arrays, aplanar y forzar tipado
+      let librosPlanos: Libro[] = [];
+      if (Array.isArray(data)) {
+        if (Array.isArray(data[0])) {
+          librosPlanos = (data as any[]).flat() as Libro[];
+        } else {
+          librosPlanos = data as Libro[];
+        }
+      }
+      setLibros(librosPlanos);
     } catch (err: any) {
       console.error('Error al cargar libros:', err);
       setError(err.message);
@@ -188,7 +198,8 @@ export default function AccessManager() {
           token,
           created_at,
           is_active,
-          libro:libro_pdf!acceso_pdf_libro_id_fkey (
+          expires_at,
+          libro:libro_pdf!fk_libro_pdf(
             id,
             titulo,
             archivo_url,
@@ -218,7 +229,8 @@ export default function AccessManager() {
           titulo: access.libro.titulo,
           archivo_url: access.libro.archivo_url,
           created_at: access.libro.created_at
-        }
+        },
+        expires_at: access.expires_at
       }));
 
       setAccesses(formattedAccesses);
@@ -232,27 +244,30 @@ export default function AccessManager() {
 
   const handleCreateAccess = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    if (!newAccess.email || !newAccess.libroId || !newAccess.expiresAt) {
+      setError('Por favor completa todos los campos.');
+      return;
+    }
+    // Validar fecha futura
+    if (new Date(newAccess.expiresAt) <= new Date()) {
+      setError('La fecha de expiración debe ser futura.');
+      return;
+    }
     try {
-      setError(null);
-
-      if (!newAccess.email || !newAccess.libroId) {
-        throw new Error('Por favor completa todos los campos');
-      }
-
-      // Primero verificamos que el libro existe
+      // Verificar libro
       const { data: libroExiste, error: libroError } = await supabase
         .from('libro_pdf')
         .select('id')
         .eq('id', newAccess.libroId)
         .single();
-
       if (libroError || !libroExiste) {
-        throw new Error('El libro seleccionado no está disponible');
+        setError('El libro seleccionado no está disponible');
+        return;
       }
-
       const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-      // Creamos el nuevo acceso
+      // Crear acceso
       const { data: newAccessData, error } = await supabase
         .from('acceso_pdf')
         .insert({
@@ -261,7 +276,7 @@ export default function AccessManager() {
           token: token,
           is_active: true,
           created_at: new Date().toISOString(),
-          expires_at: null // Sin fecha de expiración
+          expires_at: newAccess.expiresAt,
         })
         .select(`
           id,
@@ -269,7 +284,8 @@ export default function AccessManager() {
           token,
           created_at,
           is_active,
-          libro:libro_pdf (
+          expires_at,
+          libro:libro_pdf!fk_libro_pdf(
             id,
             titulo,
             archivo_url,
@@ -277,16 +293,16 @@ export default function AccessManager() {
           )
         `)
         .single();
-
       if (error) {
-        console.error('Error al crear acceso:', error);
-        throw error;
+        setError('Error al crear acceso: ' + error.message);
+        return;
       }
-
       if (!newAccessData || !newAccessData.libro) {
-        throw new Error('Error al crear el acceso');
+        setError('Error al crear el acceso');
+        return;
       }
-
+      // Si newAccessData.libro es un array, tomar el primer elemento
+      const libroData = Array.isArray(newAccessData.libro) ? newAccessData.libro[0] : newAccessData.libro;
       const formattedAccess = {
         id: newAccessData.id,
         email: newAccessData.email,
@@ -294,19 +310,18 @@ export default function AccessManager() {
         created_at: newAccessData.created_at,
         is_active: newAccessData.is_active,
         libro: {
-          id: newAccessData.libro.id,
-          titulo: newAccessData.libro.titulo,
-          archivo_url: newAccessData.libro.archivo_url,
-          created_at: newAccessData.libro.created_at
-        }
+          id: libroData.id,
+          titulo: libroData.titulo,
+          archivo_url: libroData.archivo_url,
+          created_at: libroData.created_at,
+        },
+        expires_at: newAccessData.expires_at,
       };
-
       setAccesses(prev => [formattedAccess, ...prev]);
       setNewAccess({ email: '', libroId: '', expiresAt: '' });
       setShowAccessForm(false);
-
+      setSuccess('Acceso creado correctamente.');
     } catch (err: any) {
-      console.error('Error creando acceso:', err);
       setError(err.message);
     }
   };
@@ -481,7 +496,7 @@ export default function AccessManager() {
 
       {/* Grid de Libros */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {libros.map((libro) => (
+        {libros.map((libro: Libro) => (
           <div key={libro.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="p-4">
               <div className="flex items-start justify-between">
@@ -552,7 +567,8 @@ export default function AccessManager() {
                   <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
                   <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 hidden sm:table-cell">Libro</th>
                   <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Estado</th>
-                  <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 hidden md:table-cell">Fecha</th>
+                  <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 hidden md:table-cell">Fecha de creación</th>
+                  <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 hidden md:table-cell">Expira</th>
                   <th className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                     <span className="sr-only">Acciones</span>
                   </th>
@@ -560,7 +576,7 @@ export default function AccessManager() {
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {filteredAccesses.map((access) => (
-                  <tr key={access.id} className="hover:bg-gray-50">
+                  <tr key={access.id} className="hover:bg-primary-light/10 transition-colors">
                     <td className="whitespace-nowrap px-3 py-4 text-sm">
                       <div className="flex items-center">
                         <Mail className="h-4 w-4 text-gray-400 mr-2" />
@@ -576,7 +592,7 @@ export default function AccessManager() {
                     <td className="whitespace-nowrap px-3 py-4 text-sm">
                       <button
                         onClick={() => toggleActive(access.id, access.is_active)}
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold shadow transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 ${
                           access.is_active
                             ? 'bg-green-100 text-green-800 hover:bg-green-200'
                             : 'bg-red-100 text-red-800 hover:bg-red-200'
@@ -584,13 +600,11 @@ export default function AccessManager() {
                       >
                         {access.is_active ? (
                           <>
-                            <Eye className="h-3 w-3 mr-1" />
-                            Activo
+                            <Eye className="h-3 w-3 mr-1" />Activo
                           </>
                         ) : (
                           <>
-                            <EyeOff className="h-3 w-3 mr-1" />
-                            Inactivo
+                            <EyeOff className="h-3 w-3 mr-1" />Inactivo
                           </>
                         )}
                       </button>
@@ -599,6 +613,12 @@ export default function AccessManager() {
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-1 text-gray-400" />
                         {format(new Date(access.created_at), 'PPP', { locale: es })}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 hidden md:table-cell">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1 text-gray-400" />
+                        {access.expires_at ? format(new Date(access.expires_at), 'PPP p', { locale: es }) : 'Sin expiración'}
                       </div>
                     </td>
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -615,15 +635,15 @@ export default function AccessManager() {
                               console.error('Error al copiar:', err);
                             }
                           }}
-                          className="relative group"
+                          className="relative group px-2 py-1 rounded hover:bg-primary-light/20 transition-colors"
                           title="Copiar enlace"
                         >
                           {copiedAccessId === access.id ? (
-                            <div className="absolute -top-8 -left-8 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap shadow-lg z-10">
                               ¡Copiado!
                             </div>
                           ) : (
-                            <div className="absolute -top-8 -left-8 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10">
                               Copiar link
                             </div>
                           )}
@@ -631,7 +651,7 @@ export default function AccessManager() {
                         </button>
                         <button
                           onClick={() => handleDelete(access.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 hover:text-red-700 px-2 py-1 rounded hover:bg-red-100 transition-colors"
                           title="Eliminar acceso"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -735,33 +755,34 @@ export default function AccessManager() {
 
       {showAccessForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-lg border border-gray-200">
+            <h3 className="text-2xl font-bold text-primary mb-6 text-center">
               Crear Nuevo Acceso
             </h3>
-            <form onSubmit={handleCreateAccess} className="space-y-4">
+            <form onSubmit={handleCreateAccess} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email autorizado
                 </label>
                 <input
                   type="email"
                   id="email"
                   value={newAccess.email}
                   onChange={(e) => setNewAccess({ ...newAccess, email: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-base"
+                  placeholder="cliente@email.com"
                   required
                 />
               </div>
               <div>
-                <label htmlFor="libro" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="libro" className="block text-sm font-semibold text-gray-700 mb-2">
                   Libro
                 </label>
                 <select
                   id="libro"
                   value={newAccess.libroId}
                   onChange={(e) => setNewAccess({ ...newAccess, libroId: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-base"
                   required
                 >
                   <option value="">Seleccionar libro</option>
@@ -772,22 +793,48 @@ export default function AccessManager() {
                   ))}
                 </select>
               </div>
-              <div className="mt-5 sm:mt-6 flex justify-end space-x-3">
+              <div>
+                <label htmlFor="expiresAt" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Fecha de expiración
+                </label>
+                <input
+                  type="datetime-local"
+                  id="expiresAt"
+                  value={newAccess.expiresAt}
+                  onChange={(e) => setNewAccess({ ...newAccess, expiresAt: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-base"
+                  required
+                  min={new Date().toISOString().slice(0, 16)}
+                />
+              </div>
+              {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="bg-green-50 text-green-600 p-3 rounded-lg text-sm">
+                  {success}
+                </div>
+              )}
+              <div className="flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setShowAccessForm(false);
                     setNewAccess({ email: '', libroId: '', expiresAt: '' });
+                    setError(null);
+                    setSuccess(null);
                   }}
-                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                  className="px-4 py-2 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                  className="px-6 py-2 text-base font-semibold text-white bg-primary rounded-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary shadow"
                 >
-                  Crear
+                  Crear Acceso
                 </button>
               </div>
             </form>
