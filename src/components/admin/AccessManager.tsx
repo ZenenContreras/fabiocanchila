@@ -432,7 +432,7 @@ export default function AccessManager() {
     access.libro.titulo.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (session?.user.email !== 'zenen1@gmail.com') {
+  if (session?.user.email !== 'fabiocanchila@outlook.com') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] p-4">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
