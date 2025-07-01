@@ -88,7 +88,7 @@ export default function AccessManager() {
   const [copiedAccessId, setCopiedAccessId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (session?.user.email === 'zenen1@gmail.com') {
+    if (session?.user.email === 'fabiocanchila@outlook.com') {
       fetchLibros();
       loadAccesses();
     }
