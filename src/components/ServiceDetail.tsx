@@ -123,7 +123,7 @@ export default function ServiceDetail() {
                   className="flex items-center justify-center px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-300 shadow-lg hover:shadow-xl"
                 >
                   <MessageCircle className="h-5 w-5 mr-2" />
-                  <span>Consultar por WhatsApp</span>
+                  <span>Atención personalizada al chat de Whatsapp</span>
                 </motion.button>
               </div>
             </div>

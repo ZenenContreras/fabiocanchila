@@ -156,19 +156,6 @@ const BlogList: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Nuestro Blog
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Explora tendencias, consejos y estrategias para tu crecimiento profesional
-          </p>
-        </motion.div>
-
         {/* Categorías - Improved Dropdown */}
         <div className="mb-8">
           <motion.div

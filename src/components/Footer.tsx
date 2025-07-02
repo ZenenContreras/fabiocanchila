@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Youtube, Linkedin, Twitter, Mail, Phone, MapPin, BookOpen, Instagram } from 'lucide-react';
+import { FaTiktok } from "react-icons/fa";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -49,6 +50,14 @@ Trabajo con personas, empresas, instituciones y organizaciones para aumentar sus
                 className="text-custom-white/60 hover:text-accent transition-colors transform hover:scale-110"
               >
                 <Instagram size={24} />
+              </a>
+                           <a 
+                href="https://www.tiktok.com/@fabio.canchila"
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-custom-white/60 hover:text-accent transition-colors transform hover:scale-110"
+              >
+                <FaTiktok size={24} />
               </a>
               <Link 
                 to="/publicaciones" 
