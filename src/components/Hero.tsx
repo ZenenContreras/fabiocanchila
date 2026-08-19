@@ -119,12 +119,12 @@ export default function Hero() {
               className="text-center lg:text-left"
             >
               <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-                 <span className="text-primary">Emprendimiento y gestion</span> <br />
+                 <span className="text-primary">Emprendimiento y gestión</span> <br />
                  para el <span className="text-accent">desarrollo</span>
               </h1>
               
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0">
-                Asesoro la planificación, ejecución, seguimiento, monitoreo, evaluación y gestión de aprendizajes de actividades para la transformación de realidades territoriales.
+                Asesoro la planificación, ejecución, seguimiento, monitoreo, evaluación y gestión de aprendizajes para la transformación de realidades territoriales.
               </p>
 
               <motion.div 
