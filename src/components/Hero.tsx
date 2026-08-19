@@ -12,11 +12,6 @@ export default function Hero() {
 
   const ValueProposition = [
     {
-      id: 'emprendimiento-gestion',     
-      title: "Emprendimiento y Gestión para el Desarrollo",
-      description: "Asesoro la planificación, ejecución, seguimiento, monitoreo, evaluación y gestión de aprendizajes de actividades para la transformación de realidades territoriales."
-    },
-    {
       id: 'aumenta-capacidad',
       title: "Aumenta tu capacidad para crear, aportar y capturar valor",
       description: "Aplico metodologías para emprender y hacer brillar tu marca personal."
@@ -40,6 +35,11 @@ export default function Hero() {
       id: 'sostenibilidad-esal',
       title: "Sostenibilidad de Organizaciones sin Ánimo de Lucro",
       description: "Facilito la toma de decisiones de las personas basadas en su autoconocimento y proyecto de vida."
+    },
+    {
+      id: 'transforma-suenos',
+      title: "Transforma tus Sueños en realidad",
+      description: "Ayudo a personas y organizaciones a alcanzar su máximo potencial a través del Canvas del Éxito y la Prosperidad."      
     }
   ];
 
@@ -119,12 +119,12 @@ export default function Hero() {
               className="text-center lg:text-left"
             >
               <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-                Transforma tus <span className="text-primary">Sueños</span><br />
-                en <span className="text-accent">Realidad</span>
+                 <span className="text-primary">Emprendimiento y gestion</span> <br />
+                 para el <span className="text-accent">desarrollo</span>
               </h1>
               
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0">
-                Ayudo a personas y organizaciones a alcanzar su máximo potencial a través del "Canvas del Éxito y la Prosperidad".
+                Asesoro la planificación, ejecución, seguimiento, monitoreo, evaluación y gestión de aprendizajes de actividades para la transformación de realidades territoriales.
               </p>
 
               <motion.div 
@@ -135,7 +135,7 @@ export default function Hero() {
                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center w-full sm:w-auto">
                 
                   <Link
-                    to={`/propuesta-de-valor/transforma-suenos`}
+                    to={`/propuesta-de-valor/emprendimiento-gestion`}
                     className="inline-flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg hover:bg-primary-dark transform hover:translate-x-1 w-full"
                   >
                     <MousePointerClick className="h-5 w-5 mr-2 group-hover:animate-bounce" />
@@ -231,6 +231,13 @@ export default function Hero() {
                       <span className="text-accent">Sostenibilidad</span> de{' '}
                       <span className="text-primary">Organizaciones</span> {' '}
                       <span className="text-accent">Sin</span> Ánimos de Lucro
+                    </>
+                  )}
+                  {proposition.id === 'transforma-suenos' && (
+                    <>
+                      <span className="text-accent">Transforma</span> tus{' '}
+                      <span className="text-primary">sueños</span> en {' '}
+                      <span className="text-accent">realidad</span>
                     </>
                   )}
                 </h3>
